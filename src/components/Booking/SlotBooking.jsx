@@ -8,12 +8,25 @@ const SlotBooking = ({ doctor, matchType, reasoning, urgencyScore, symptoms }) =
   const navigate = useNavigate();
   const [isBookedSuccess, setIsBookedSuccess] = useState(false);
   const [selectedSlot, setSelectedSlot] = useState(null);
+<<<<<<< HEAD
+=======
+  const [globalBookings, setGlobalBookings] = useState([]);
+
+  React.useEffect(() => {
+    const fetchBookings = async () => {
+      const data = await getBookedAppointments();
+      setGlobalBookings(data);
+    };
+    fetchBookings();
+  }, []);
+>>>>>>> 03fe6592c0a4c645a0d9d48c63f935a3d59bdd59
 
   const allSlots = ["09:00 AM", "10:00 AM", "11:00 AM", "12:00 PM", "01:00 PM", "02:00 PM", "03:00 PM"];
   
   const isHighUrgency = urgencyScore >= 7;
   const isSuggested = matchType === 'suggested' || matchType === 'emergency';
 
+<<<<<<< HEAD
   const handleBookSlot = (slot) => {
     // Save to global mock database for Doctor Dashboard sync
     addBookedAppointment({
@@ -26,6 +39,23 @@ const SlotBooking = ({ doctor, matchType, reasoning, urgencyScore, symptoms }) =
 
     setSelectedSlot(slot);
     setIsBookedSuccess(true);
+=======
+  const handleBookSlot = async (slot) => {
+    try {
+      await addBookedAppointment({
+        doctor,
+        slotTime: slot,
+        urgencyScore,
+        reasoning,
+        symptoms: symptoms || []
+      });
+
+      setSelectedSlot(slot);
+      setIsBookedSuccess(true);
+    } catch (error) {
+      alert("Failed to confirm your booking. Please try again.");
+    }
+>>>>>>> 03fe6592c0a4c645a0d9d48c63f935a3d59bdd59
   };
 
   if (isBookedSuccess) {
@@ -85,8 +115,12 @@ const SlotBooking = ({ doctor, matchType, reasoning, urgencyScore, symptoms }) =
           const isAvailable = doctor.availableSlots.includes(slot) || (doctor.availableSlots.includes('IMMEDIATE') && slot === '10:00 AM');
           
           // Cross-reference with bookedAppointments to see if someone else took it (mocking real-time sync)
+<<<<<<< HEAD
           const bookings = getBookedAppointments();
           const isTakenGlobally = bookings.some(appt => appt.doctor.id === doctor.id && appt.slotTime === slot);
+=======
+          const isTakenGlobally = globalBookings.some(appt => appt.doctor.id === doctor.id && appt.slotTime === slot);
+>>>>>>> 03fe6592c0a4c645a0d9d48c63f935a3d59bdd59
           
           const isBooked = !isAvailable || isTakenGlobally;
           

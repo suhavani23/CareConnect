@@ -10,7 +10,15 @@ const PatientDashboard = () => {
   const [bookings, setBookings] = useState([]);
 
   useEffect(() => {
+<<<<<<< HEAD
     setBookings(getBookedAppointments());
+=======
+    const fetchBookings = async () => {
+      const data = await getBookedAppointments();
+      setBookings(data);
+    };
+    fetchBookings();
+>>>>>>> 03fe6592c0a4c645a0d9d48c63f935a3d59bdd59
   }, []);
 
   const handleLogout = () => {
@@ -18,10 +26,23 @@ const PatientDashboard = () => {
     navigate('/');
   };
 
+<<<<<<< HEAD
   const handleCancelAppointment = (id) => {
     if (window.confirm('Are you sure you want to cancel this appointment?')) {
       removeBookedAppointment(id);
       setBookings(getBookedAppointments());
+=======
+  const handleCancelAppointment = async (id) => {
+    if (window.confirm('Are you sure you want to cancel this appointment?')) {
+      try {
+        await removeBookedAppointment(id);
+        const data = await getBookedAppointments();
+        setBookings(data);
+      } catch (err) {
+        console.error('Failed to cancel appointment', err);
+        alert('Failed to cancel appointment. Please try again.');
+      }
+>>>>>>> 03fe6592c0a4c645a0d9d48c63f935a3d59bdd59
     }
   };
 

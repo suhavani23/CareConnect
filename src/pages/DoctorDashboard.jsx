@@ -5,6 +5,7 @@ import { getBookedAppointments, removeBookedAppointment } from '../services/mock
 
 const DoctorDashboard = () => {
   const [appointments, setAppointments] = useState([]);
+<<<<<<< HEAD
 
   useEffect(() => {
     // Load booked appointments from our mock database
@@ -19,6 +20,62 @@ const DoctorDashboard = () => {
     }
   };
 
+=======
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [password, setPassword] = useState('');
+
+  useEffect(() => {
+    const fetchBookings = async () => {
+      const bookings = await getBookedAppointments();
+      setAppointments(bookings); // getBookedAppointments already orders by created_at descending
+    };
+    fetchBookings();
+  }, []);
+
+  const handleCancelAppointment = async (id) => {
+    if (window.confirm('Are you sure you want to cancel this appointment?')) {
+      try {
+        await removeBookedAppointment(id);
+        const bookings = await getBookedAppointments();
+        setAppointments(bookings);
+      } catch (err) {
+        console.error('Failed to cancel appointment', err);
+        alert('Failed to cancel appointment.');
+      }
+    }
+  };
+
+  if (!isAuthenticated) {
+    return (
+      <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center p-6">
+        <div className="bg-white p-8 rounded-2xl shadow-xl max-w-sm w-full text-center border border-slate-100">
+           <div className="w-12 h-12 bg-slate-800 rounded-lg flex items-center justify-center mx-auto mb-4">
+             <span className="text-white font-bold text-2xl leading-none">D</span>
+           </div>
+           <h2 className="text-2xl font-bold text-slate-800 mb-6">Doctor Portal</h2>
+           <form onSubmit={(e) => {
+             e.preventDefault();
+             if (password === 'admin') setIsAuthenticated(true);
+             else alert('Incorrect passkey');
+           }}>
+             <input
+               type="password"
+               value={password}
+               onChange={(e) => setPassword(e.target.value)}
+               placeholder="Enter Passkey (admin)"
+               className="w-full p-3 border border-slate-300 rounded-lg mb-4 text-center outline-none focus:ring-2 focus:ring-slate-500"
+             />
+             <button type="submit" className="w-full bg-slate-800 text-white font-bold py-3 rounded-lg hover:bg-slate-900 transition">
+               Access Portal
+             </button>
+           </form>
+           <Link to="/" className="block mt-6 text-sm text-slate-500 hover:text-slate-700">Back to Home</Link>
+        </div>
+      </div>
+    );
+  }
+
+>>>>>>> 03fe6592c0a4c645a0d9d48c63f935a3d59bdd59
   return (
     <div className="min-h-screen bg-slate-50 font-sans p-6 md:p-12 relative">
       <header className="max-w-5xl mx-auto mb-10 flex items-center justify-between">

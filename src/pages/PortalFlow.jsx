@@ -6,9 +6,13 @@ import PatientIntake from '../components/IntakeForm/PatientIntake';
 import SlotBooking from '../components/Booking/SlotBooking';
 import RecommendationView from '../components/Booking/RecommendationView';
 import DoctorList from '../components/Booking/DoctorList';
+<<<<<<< HEAD
 import EmergencyAlert from '../components/IntakeForm/EmergencyAlert';
 import { simulateCareConnectMatchmaker } from '../services/aiService';
 import { assessUrgency } from '../services/UrgencyService';
+=======
+import { simulateCareConnectMatchmaker } from '../services/aiService';
+>>>>>>> 03fe6592c0a4c645a0d9d48c63f935a3d59bdd59
 
 const variants = {
   enter: (direction) => ({
@@ -47,6 +51,7 @@ const PortalFlow = () => {
     setView(newView);
   };
 
+<<<<<<< HEAD
   const handleIntakeComplete = async (formData) => {
     navigateTo('loading', 1);
     
@@ -60,12 +65,23 @@ const PortalFlow = () => {
         patientSymptoms: formData.symptomsArray,
         bodyRegions: formData.bodyRegions,
         urgencyScore: urgency.score,
+=======
+  const handleIntakeComplete = (formData) => {
+    navigateTo('loading', 1);
+    setUrgencyScore(formData.painLevel);
+    
+    setTimeout(() => {
+      const result = simulateCareConnectMatchmaker({
+        patientSymptoms: formData.symptomsArray,
+        urgencyScore: formData.painLevel,
+>>>>>>> 03fe6592c0a4c645a0d9d48c63f935a3d59bdd59
         preferredDoctorID: formData.preferredDoctorID
       });
       
       const matchData = {
         ...result,
         symptoms: formData.symptomsArray,
+<<<<<<< HEAD
         urgencyScore: urgency.score
       };
       setMatchResult(matchData);
@@ -93,6 +109,19 @@ const PortalFlow = () => {
         }
       }, 2000);
     }
+=======
+        urgencyScore: formData.painLevel
+      };
+      
+      setMatchResult(matchData);
+      
+      if (result.matchType === 'preferred') {
+        navigateTo('booking', 1);
+      } else {
+        navigateTo('recommendation', 1);
+      }
+    }, 2500);
+>>>>>>> 03fe6592c0a4c645a0d9d48c63f935a3d59bdd59
   };
 
   const handleGoBack = () => {
@@ -171,6 +200,7 @@ const PortalFlow = () => {
             </motion.div>
           )}
 
+<<<<<<< HEAD
           {view === 'emergency' && (
             <motion.div
               key="emergency"
@@ -191,6 +221,8 @@ const PortalFlow = () => {
             </motion.div>
           )}
 
+=======
+>>>>>>> 03fe6592c0a4c645a0d9d48c63f935a3d59bdd59
           {view === 'recommendation' && matchResult && (
             <motion.div
               key="recommendation"

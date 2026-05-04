@@ -44,6 +44,7 @@ const Home = () => {
           CareConnect uses AI to understand your symptoms and instantly route you to the best available specialist in our hospital.
         </p>
 
+<<<<<<< HEAD
         <div className="flex flex-col sm:flex-row gap-4 w-full max-w-md justify-center mb-16">
           <Link to="/login" className="flex-1 py-4 bg-blue-600 text-white font-bold rounded-xl shadow-lg hover:bg-blue-700 transition transform hover:-translate-y-1 text-center">
             Patient Login
@@ -51,6 +52,33 @@ const Home = () => {
           <Link to="/register" className="flex-1 py-4 bg-white text-blue-600 border border-slate-200 font-bold rounded-xl shadow-sm hover:bg-slate-50 transition transform hover:-translate-y-1 text-center">
             Create Account
           </Link>
+=======
+        {/* Facilities Section */}
+        <div className="w-full max-w-4xl mx-auto mb-16">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 flex flex-col items-center">
+              <div className="w-12 h-12 bg-green-50 text-green-600 rounded-full flex items-center justify-center mb-4">
+                <Activity size={24} />
+              </div>
+              <h4 className="font-bold text-slate-800 mb-2">24/7 Emergency Care</h4>
+              <p className="text-sm text-slate-500 text-center">Round-the-clock immediate medical attention for critical situations.</p>
+            </div>
+            <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 flex flex-col items-center">
+              <div className="w-12 h-12 bg-purple-50 text-purple-600 rounded-full flex items-center justify-center mb-4">
+                <Brain size={24} />
+              </div>
+              <h4 className="font-bold text-slate-800 mb-2">Advanced Labs & Diagnostics</h4>
+              <p className="text-sm text-slate-500 text-center">State-of-the-art diagnostic imaging and rapid pathology services.</p>
+            </div>
+            <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 flex flex-col items-center">
+              <div className="w-12 h-12 bg-orange-50 text-orange-600 rounded-full flex items-center justify-center mb-4">
+                <Heart size={24} />
+              </div>
+              <h4 className="font-bold text-slate-800 mb-2">Modern ICUs</h4>
+              <p className="text-sm text-slate-500 text-center">Fully equipped intensive care units with specialized monitoring.</p>
+            </div>
+          </div>
+>>>>>>> 03fe6592c0a4c645a0d9d48c63f935a3d59bdd59
         </div>
 
         {/* Specialties Grid */}
