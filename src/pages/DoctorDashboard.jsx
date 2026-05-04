@@ -9,15 +9,23 @@ const DoctorDashboard = () => {
   const [password, setPassword] = useState('');
 
   useEffect(() => {
-    // Load booked appointments from our mock database
-    const bookings = getBookedAppointments();
-    setAppointments([...bookings].reverse()); // Newest first
+    const fetchBookings = async () => {
+      const bookings = await getBookedAppointments();
+      setAppointments(bookings); // getBookedAppointments already orders by created_at descending
+    };
+    fetchBookings();
   }, []);
 
-  const handleCancelAppointment = (id) => {
+  const handleCancelAppointment = async (id) => {
     if (window.confirm('Are you sure you want to cancel this appointment?')) {
-      removeBookedAppointment(id);
-      setAppointments(getBookedAppointments().reverse());
+      try {
+        await removeBookedAppointment(id);
+        const bookings = await getBookedAppointments();
+        setAppointments(bookings);
+      } catch (err) {
+        console.error('Failed to cancel appointment', err);
+        alert('Failed to cancel appointment.');
+      }
     }
   };
 
