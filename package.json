@@ -10,10 +10,8 @@
     "preview": "vite preview"
   },
   "dependencies": {
-<<<<<<< HEAD
-=======
     "@supabase/supabase-js": "^2.105.1",
->>>>>>> 03fe6592c0a4c645a0d9d48c63f935a3d59bdd59
+
     "@tailwindcss/vite": "^4.2.4",
     "framer-motion": "^12.38.0",
     "lucide-react": "^1.14.0",
