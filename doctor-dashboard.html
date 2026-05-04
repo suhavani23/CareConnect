@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Doctor Dashboard — MedCare</title>
+  <link rel="stylesheet" href="css/styles.css" />
+  <style>
+    .today-tab { display:flex; gap:8px; margin-bottom:1.5rem; }
+    .today-tab-btn {
+      padding:8px 20px; border-radius:99px; border:1.5px solid var(--border);
+      background:var(--white); font-size:0.85rem; font-weight:600; cursor:pointer;
+      transition:all var(--transition); font-family:'Plus Jakarta Sans',sans-serif; color:var(--text-medium);
+    }
+    .today-tab-btn.active { background:var(--primary); color:#fff; border-color:var(--primary); }
+    .apt-list-item {
+      background:var(--white); border:1px solid var(--border-light); border-radius:var(--radius-lg);
+      padding:1.25rem 1.5rem; margin-bottom:12px; cursor:pointer;
+      transition:all var(--transition); display:flex; align-items:center; gap:1rem;
+    }
+    .apt-list-item:hover { box-shadow:var(--shadow); border-color:var(--primary-light); }
+    .apt-list-item.active-item { border-color:var(--primary); background:var(--primary-pale); }
+    .apt-num { width:36px; height:36px; border-radius:50%; background:var(--primary-pale); display:flex; align-items:center; justify-content:center; font-weight:700; color:var(--primary-dark); font-size:0.85rem; flex-shrink:0; }
+    .apt-patient-name { font-weight:700; font-size:0.92rem; }
+    .apt-patient-info { font-size:0.78rem; color:var(--text-light); margin-top:2px; }
+    .apt-time-badge { background:var(--primary-pale); color:var(--primary-dark); padding:4px 10px; border-radius:6px; font-size:0.78rem; font-weight:700; flex-shrink:0; }
+    .detail-section { background:var(--white); border:1px solid var(--border-light); border-radius:var(--radius-lg); overflow:hidden; height:fit-content; position:sticky; top:88px; }
+    .detail-header { padding:1.25rem 1.5rem; background:linear-gradient(135deg,var(--primary-pale),var(--border-light)); border-bottom:1px solid var(--border-light); }
+    .detail-patient-name { font-size:1.2rem; font-weight:700; margin-bottom:4px; }
+    .detail-meta { font-size:0.82rem; color:var(--text-light); }
+    .detail-body { padding:1.5rem; }
+    .detail-section-title { font-size:0.75rem; font-weight:700; text-transform:uppercase; letter-spacing:0.1em; color:var(--text-muted); margin-bottom:0.75rem; }
+    .info-row { display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px solid var(--border-light); font-size:0.88rem; }
+    .info-row:last-child { border-bottom:none; }
+    .info-label { color:var(--text-light); }
+    .info-val { font-weight:600; }
+    .urgency-section { background:var(--warning-light); border:1px solid #FCD34D; border-radius:var(--radius); padding:1rem; margin-bottom:1rem; }
+    .urgency-section.high { background:var(--danger-light); border-color:#FCA5A5; }
+    .urgency-section.low { background:var(--primary-pale); border-color:var(--border); }
+    .quick-note { background:var(--primary-pale); border-radius:var(--radius); padding:1rem; }
+    .doc-schedule-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:8px; margin-top:1rem; }
+    .doc-slot { padding:8px; border-radius:var(--radius-sm); text-align:center; font-size:0.75rem; font-weight:600; border:1px solid; }
+    .doc-slot.booked-me { border-color:var(--primary); background:var(--primary-pale); color:var(--primary-dark); }
+    .doc-slot.booked-other { border-color:#FECACA; background:#FFF7F7; color:#9CA3AF; }
+    .doc-slot.free { border-color:var(--border); background:var(--white); color:var(--text-muted); }
+    .empty-detail { text-align:center; padding:3rem; color:var(--text-muted); }
+    .empty-detail .empty-icon { font-size:3rem; margin-bottom:1rem; }
+  </style>
+</head>
+<body>
+
+<nav class="navbar">
+  <a href="index.html" class="nav-logo">
+    <div class="logo-icon">🏥</div>
+    MedCare
+  </a>
+  <ul class="nav-links">
+    <li><a href="doctor-dashboard.html" class="active">My Dashboard</a></li>
+    <li><a href="index.html">Hospital Portal</a></li>
+  </ul>
+  <div class="nav-actions">
+    <div style="display:flex;align-items:center;gap:10px;">
+      <span class="badge badge-green">👨‍⚕️ Doctor Portal</span>
+      <div id="doc-nav-avatar" style="width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,var(--primary-light),var(--primary-dark));display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:0.85rem;"></div>
+      <button class="btn btn-ghost btn-sm" onclick="logout()">Logout</button>
+    </div>
+  </div>
+</nav>
+
+<div class="dash-layout">
+  <aside class="sidebar">
+    <div class="sidebar-user" id="doc-sidebar-user">
+      <div class="sidebar-user-avatar" id="doc-sidebar-avatar"></div>
+      <div>
+        <div class="sidebar-user-name" id="doc-sidebar-name">Doctor</div>
+        <div class="sidebar-user-role" id="doc-sidebar-spec">Speciality</div>
+      </div>
+    </div>
+    <div class="sidebar-section-label">Dashboard</div>
+    <ul class="sidebar-nav">
+      <li><a href="doctor-dashboard.html" class="active"><span class="nav-icon">🏠</span> Overview</a></li>
+      <li><a href="#" onclick="showSection('today')"><span class="nav-icon">📅</span> Today's Appointments</a></li>
+      <li><a href="#" onclick="showSection('all')"><span class="nav-icon">📋</span> All Appointments</a></li>
+    </ul>
+    <div class="sidebar-section-label">Account</div>
+    <ul class="sidebar-nav">
+      <li><a href="#" onclick="logout()"><span class="nav-icon">🚪</span> Logout</a></li>
+    </ul>
+  </aside>
+
+  <main class="dash-main">
+    <div class="page-header">
+      <h2 id="doc-welcome-name">Doctor Dashboard</h2>
+      <p id="doc-welcome-sub">Manage your appointments and patient details</p>
+    </div>
+
+    <!-- Stats -->
+    <div class="stats-grid mb-4">
+      <div class="stat-card"><div class="stat-icon">📅</div><div><div class="stat-num" id="doc-stat-today">0</div><div class="stat-label">Today's Appointments</div></div></div>
+      <div class="stat-card"><div class="stat-icon">👥</div><div><div class="stat-num" id="doc-stat-total">0</div><div class="stat-label">Total Patients</div></div></div>
+      <div class="stat-card"><div class="stat-icon">⚡</div><div><div class="stat-num" id="doc-stat-urgent">0</div><div class="stat-label">High Priority</div></div></div>
+      <div class="stat-card"><div class="stat-icon">✅</div><div><div class="stat-num" id="doc-stat-done">0</div><div class="stat-label">Confirmed</div></div></div>
+    </div>
+
+    <!-- Main Grid -->
+    <div style="display:grid;grid-template-columns:1fr 1.2fr;gap:1.5rem;">
+      <!-- Appointments List -->
+      <div>
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;">
+          <h4>Appointments</h4>
+          <div class="today-tab">
+            <button class="today-tab-btn active" onclick="filterApts('today', this)">Today</button>
+            <button class="today-tab-btn" onclick="filterApts('all', this)">All</button>
+          </div>
+        </div>
+        <div id="doc-apt-list">
+          <div style="text-align:center;color:var(--text-muted);padding:2rem;">Loading...</div>
+        </div>
+      </div>
+
+      <!-- Patient Detail Panel -->
+      <div>
+        <h4 style="margin-bottom:1rem;">Patient Details</h4>
+        <div class="detail-section" id="patient-detail-panel">
+          <div class="empty-detail">
+            <div class="empty-icon">👈</div>
+            <p>Select an appointment from the list to view patient details and symptoms report.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<script src="js/app.js"></script>
+<script>
+let docUser = null;
+let allDocApts = [];
+let currentFilter = 'today';
+
+document.addEventListener('DOMContentLoaded', () => {
+  docUser = requireAuth('doctor');
+  if (!docUser) return;
+
+  const initials = getInitials(docUser.name || 'Dr');
+  document.getElementById('doc-nav-avatar').textContent = initials;
+  document.getElementById('doc-sidebar-avatar').textContent = initials;
+  document.getElementById('doc-sidebar-name').textContent = docUser.name?.replace('Dr. ', '') || 'Doctor';
+  document.getElementById('doc-sidebar-spec').textContent = docUser.speciality || 'Specialist';
+
+  const hour = new Date().getHours();
+  const greeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
+  document.getElementById('doc-welcome-name').textContent = `${greeting}, ${docUser.name || 'Doctor'} 👋`;
+  document.getElementById('doc-welcome-sub').textContent = `Here are your appointments for today — ${new Date().toLocaleDateString('en-IN', {weekday:'long',day:'numeric',month:'long',year:'numeric'})}.`;
+
+  loadDoctorData();
+});
+
+function loadDoctorData() {
+  allDocApts = getAppointments({ doctorId: docUser.id });
+  const today = new Date().toISOString().split('T')[0];
+  const todayApts = allDocApts.filter(a => a.date === today);
+  const highUrgency = allDocApts.filter(a => a.urgencyLevel === 'High' || a.urgencyLevel === 'Critical');
+
+  document.getElementById('doc-stat-today').textContent = todayApts.length;
+  document.getElementById('doc-stat-total').textContent = allDocApts.length;
+  document.getElementById('doc-stat-urgent').textContent = highUrgency.length;
+  document.getElementById('doc-stat-done').textContent = allDocApts.filter(a => a.status === 'confirmed').length;
+
+  renderAptList('today');
+}
+
+function filterApts(filter, btn) {
+  currentFilter = filter;
+  document.querySelectorAll('.today-tab-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderAptList(filter);
+}
+
+function renderAptList(filter) {
+  const today = new Date().toISOString().split('T')[0];
+  let apts = filter === 'today'
+    ? allDocApts.filter(a => a.date === today)
+    : allDocApts;
+
+  // Sort by urgency score DESC
+  apts = apts.sort((a, b) => (b.urgencyScore || 0) - (a.urgencyScore || 0));
+
+  const el = document.getElementById('doc-apt-list');
+  if (apts.length === 0) {
+    el.innerHTML = `<div style="text-align:center;color:var(--text-muted);padding:3rem;">
+      <div style="font-size:2.5rem;margin-bottom:0.5rem;">📭</div>
+      <div>No appointments ${filter === 'today' ? 'today' : 'found'}</div>
+    </div>`;
+    return;
+  }
+
+  el.innerHTML = apts.map((apt, idx) => {
+    const urgColor = apt.urgencyLevel === 'Critical' || apt.urgencyLevel === 'High' ? '#EF4444' :
+                    apt.urgencyLevel === 'Medium' ? '#F59E0B' : '#22C55E';
+    return `<div class="apt-list-item" onclick="showPatientDetail('${apt.id}', this)">
+      <div class="apt-num">${idx + 1}</div>
+      <div style="flex:1;">
+        <div class="apt-patient-name">${apt.patientName || 'Patient'}</div>
+        <div class="apt-patient-info">${apt.symptoms?.join(', ') || 'General consultation'}</div>
+        <div style="margin-top:4px;display:flex;gap:6px;flex-wrap:wrap;">
+          ${apt.urgencyLevel ? `<span style="font-size:0.7rem;font-weight:700;color:${urgColor};">⚡ ${apt.urgencyLevel} Priority</span>` : ''}
+          <span style="font-size:0.7rem;color:var(--text-muted);">📅 ${formatDate(apt.date)}</span>
+        </div>
+      </div>
+      <div class="apt-time-badge">${formatTime(apt.time)}</div>
+    </div>`;
+  }).join('');
+}
+
+function showPatientDetail(aptId, el) {
+  document.querySelectorAll('.apt-list-item').forEach(i => i.classList.remove('active-item'));
+  el.classList.add('active-item');
+
+  const apt = allDocApts.find(a => a.id === aptId);
+  if (!apt) return;
+
+  // Get patient info (if available)
+  const patients = JSON.parse(localStorage.getItem('hb_patients') || '[]');
+  const patient = patients.find(p => p.id === apt.patientId);
+
+  const urgencyClass = apt.urgencyLevel === 'Critical' || apt.urgencyLevel === 'High' ? 'high' : apt.urgencyLevel === 'Low' ? 'low' : '';
+  const urgColor = apt.urgencyLevel === 'Critical' || apt.urgencyLevel === 'High' ? '#B91C1C' :
+                   apt.urgencyLevel === 'Medium' ? '#92400E' : '#166534';
+
+  // Build slots display
+  const allSlots = JSON.parse(localStorage.getItem('hb_slots') || '[]');
+  const today = new Date().toISOString().split('T')[0];
+  const todaySlots = allSlots.filter(s => s.doctorId === docUser.id && s.date === today).slice(0, 8);
+  const slotsHtml = todaySlots.map(s => {
+    const isThisApt = s.id === apt.slotId || (s.booked && s.patientId === apt.patientId);
+    const cls = isThisApt ? 'booked-me' : s.booked ? 'booked-other' : 'free';
+    return `<div class="doc-slot ${cls}">${formatTime(s.time)}</div>`;
+  }).join('');
+
+  const panel = document.getElementById('patient-detail-panel');
+  panel.innerHTML = `
+    <div class="detail-header">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+        <div>
+          <div class="detail-patient-name">${apt.patientName || 'Patient'}</div>
+          <div class="detail-meta">Appointment ID: ${apt.id}</div>
+        </div>
+        <span class="badge badge-green">Confirmed</span>
+      </div>
+    </div>
+    <div class="detail-body">
+
+      <!-- Appointment Info -->
+      <div class="detail-section-title">Appointment</div>
+      <div class="info-row"><span class="info-label">Date</span><span class="info-val">${formatDate(apt.date)}</span></div>
+      <div class="info-row"><span class="info-label">Time</span><span class="info-val">${formatTime(apt.time)}</span></div>
+      <div class="info-row"><span class="info-label">Department</span><span class="info-val">${apt.department || docUser.department}</span></div>
+
+      ${patient ? `
+      <div class="divider"></div>
+      <div class="detail-section-title">Patient Information</div>
+      <div class="info-row"><span class="info-label">Name</span><span class="info-val">${patient.name}</span></div>
+      <div class="info-row"><span class="info-label">Age / Gender</span><span class="info-val">${patient.age || '—'} / ${patient.gender || '—'}</span></div>
+      <div class="info-row"><span class="info-label">Blood Group</span><span class="info-val">${patient.bloodGroup || '—'}</span></div>
+      <div class="info-row"><span class="info-label">Contact</span><span class="info-val">${patient.phone || '—'}</span></div>
+      <div class="info-row"><span class="info-label">Allergies</span><span class="info-val">${patient.allergies?.join(', ') || 'None'}</span></div>
+      ${patient.conditions ? `<div class="info-row"><span class="info-label">Conditions</span><span class="info-val">${patient.conditions}</span></div>` : ''}
+      ` : ''}
+
+      <div class="divider"></div>
+      <div class="detail-section-title">Symptoms Report</div>
+      <div style="margin-bottom:1rem;">
+        ${apt.symptoms?.length ? `
+          <div style="margin-bottom:8px;font-size:0.85rem;font-weight:600;">Reported Symptoms:</div>
+          <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:1rem;">
+            ${apt.symptoms.map(s => `<span class="symptom-tag">${s}</span>`).join('')}
+          </div>
+        ` : ''}
+        ${apt.affectedArea ? `<div class="info-row"><span class="info-label">Affected Area</span><span class="info-val">${apt.affectedArea}</span></div>` : ''}
+        ${apt.painRating !== undefined ? `<div class="info-row"><span class="info-label">Pain Rating</span><span class="info-val">${apt.painRating}/10 ${apt.painRating >= 8 ? '🔴' : apt.painRating >= 5 ? '🟡' : '🟢'}</span></div>` : ''}
+        ${apt.description ? `<div style="background:var(--primary-bg);border-radius:var(--radius-sm);padding:10px;font-size:0.85rem;margin-top:8px;"><strong>Patient note:</strong> ${apt.description}</div>` : ''}
+      </div>
+
+      <!-- Urgency Score -->
+      ${apt.urgencyLevel ? `
+      <div class="urgency-section ${urgencyClass}">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+          <strong style="color:${urgColor};">⚡ Urgency Assessment</strong>
+          <span style="font-weight:800;color:${urgColor};">${apt.urgencyLevel}</span>
+        </div>
+        <div class="urgency-bar">
+          <div class="urgency-fill ${urgencyClass}" style="width:${(apt.urgencyScore || 5) * 10}%;"></div>
+        </div>
+        <div style="font-size:0.75rem;color:${urgColor};margin-top:6px;">Score: ${apt.urgencyScore || 5}/10 — AI generated triage score (not visible to patient)</div>
+      </div>` : ''}
+
+      <!-- Today's Schedule -->
+      ${slotsHtml ? `
+      <div class="divider"></div>
+      <div class="detail-section-title">Your Slot Schedule (Today)</div>
+      <div style="font-size:0.75rem;color:var(--text-muted);margin-bottom:8px;">
+        🟢 Current patient &nbsp; 🔴 Booked &nbsp; ⬜ Available
+      </div>
+      <div class="doc-schedule-grid">${slotsHtml}</div>
+      ` : ''}
+
+    </div>
+  `;
+}
+</script>
+</body>
+</html>

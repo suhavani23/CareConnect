@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>My Medications — MedCare</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Fraunces:wght@700;800&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="css/styles.css"/>
+  <style>
+    /* ── Medication-specific styles ── */
+    .med-status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 3px 10px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: .5px;
+    }
+    .med-status-badge.active   { background:#DCFCE7; color:#166534; }
+    .med-status-badge.completed{ background:#F1F5F9; color:#64748B; }
+    .med-status-badge.paused   { background:#FEF3C7; color:#92400E; }
+
+    .rx-card {
+      background:#fff;
+      border:1.5px solid #E2E8F0;
+      border-radius:16px;
+      padding:24px;
+      margin-bottom:16px;
+      transition:box-shadow .2s, border-color .2s;
+    }
+    .rx-card:hover { box-shadow:0 4px 20px rgba(22,163,74,.1); border-color:#86EFAC; }
+
+    .rx-card-header {
+      display:flex;
+      justify-content:space-between;
+      align-items:flex-start;
+      margin-bottom:16px;
+      flex-wrap:wrap;
+      gap:10px;
+    }
+    .rx-title { font-family:'Fraunces',serif; font-size:18px; color:#0F172A; margin:0 0 4px; }
+    .rx-meta  { font-size:13px; color:#64748B; }
+
+    .rx-drugs-grid {
+      display:grid;
+      grid-template-columns:repeat(auto-fill, minmax(200px,1fr));
+      gap:12px;
+      margin-bottom:16px;
+    }
+    .drug-pill {
+      background:#F8FAFC;
+      border:1px solid #E2E8F0;
+      border-radius:10px;
+      padding:12px 14px;
+      display:flex;
+      align-items:center;
+      gap:10px;
+    }
+    .drug-pill .drug-icon {
+      width:36px; height:36px; border-radius:8px;
+      background:linear-gradient(135deg,#DCFCE7,#BBF7D0);
+      display:flex; align-items:center; justify-content:center;
+      font-size:18px; flex-shrink:0;
+    }
+    .drug-name  { font-size:14px; font-weight:600; color:#1E293B; line-height:1.2; }
+    .drug-dosage{ font-size:12px; color:#64748B; }
+
+    .rx-footer {
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      padding-top:14px;
+      border-top:1px solid #F1F5F9;
+      flex-wrap:wrap;
+      gap:10px;
+    }
+    .rx-footer-info { font-size:13px; color:#64748B; }
+    .rx-footer-info span { color:#16A34A; font-weight:600; }
+
+    .btn-download-rx {
+      padding:8px 16px; font-size:13px; font-weight:600;
+      background:#F0FDF4; color:#16A34A;
+      border:1.5px solid #86EFAC; border-radius:8px;
+      cursor:pointer; display:flex; align-items:center; gap:6px;
+      transition:background .2s;
+    }
+    .btn-download-rx:hover { background:#DCFCE7; }
+
+    .reminder-toggle {
+      display:flex; align-items:center; gap:8px;
+      font-size:13px; color:#64748B; cursor:pointer;
+    }
+    .toggle-switch {
+      width:36px; height:20px;
+      background:#CBD5E1; border-radius:10px;
+      position:relative; transition:background .2s; cursor:pointer;
+    }
+    .toggle-switch.on { background:#16A34A; }
+    .toggle-switch::after {
+      content:''; position:absolute;
+      width:16px; height:16px; border-radius:50%;
+      background:#fff; top:2px; left:2px;
+      transition:left .2s; box-shadow:0 1px 3px rgba(0,0,0,.2);
+    }
+    .toggle-switch.on::after { left:18px; }
+
+    .refill-bar-wrap { margin:6px 0 0; }
+    .refill-label { font-size:12px; color:#64748B; margin-bottom:4px; display:flex; justify-content:space-between; }
+    .refill-bar { height:6px; background:#E2E8F0; border-radius:3px; overflow:hidden; }
+    .refill-fill { height:100%; background:linear-gradient(90deg,#16A34A,#4ADE80); border-radius:3px; transition:width .5s; }
+    .refill-fill.low { background:linear-gradient(90deg,#EF4444,#FCA5A5); }
+
+    /* Filter tabs */
+    .filter-tabs { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:24px; }
+    .filter-tab {
+      padding:8px 18px; border-radius:20px; font-size:13px; font-weight:600;
+      border:1.5px solid #E2E8F0; background:#fff; color:#64748B;
+      cursor:pointer; transition:all .2s;
+    }
+    .filter-tab.active { background:#16A34A; color:#fff; border-color:#16A34A; }
+
+    /* Summary cards */
+    .med-summary-grid {
+      display:grid;
+      grid-template-columns:repeat(auto-fill, minmax(180px,1fr));
+      gap:16px;
+      margin-bottom:28px;
+    }
+    .med-summary-card {
+      background:#fff; border:1.5px solid #E2E8F0; border-radius:14px;
+      padding:18px 20px;
+    }
+    .med-summary-card .ms-number { font-size:28px; font-weight:800; color:#16A34A; line-height:1; }
+    .med-summary-card .ms-label  { font-size:13px; color:#64748B; margin-top:4px; }
+
+    /* Instruction box */
+    .instruction-box {
+      background:#F0FDF4; border:1px solid #BBF7D0; border-radius:12px;
+      padding:14px 16px; margin-top:12px;
+      font-size:13px; color:#166534; line-height:1.6;
+    }
+    .instruction-box strong { display:block; margin-bottom:4px; }
+
+    /* Timeline */
+    .timeline-section { margin-top:32px; }
+    .timeline-section h3 { font-size:16px; font-weight:700; color:#0F172A; margin-bottom:16px; }
+    .timeline-item {
+      display:flex; gap:14px; margin-bottom:18px;
+    }
+    .timeline-dot {
+      width:10px; height:10px; border-radius:50%; background:#16A34A;
+      flex-shrink:0; margin-top:5px;
+      position:relative;
+    }
+    .timeline-dot::after {
+      content:''; position:absolute; left:4px; top:10px;
+      width:2px; height:calc(100% + 8px);
+      background:#E2E8F0;
+    }
+    .timeline-item:last-child .timeline-dot::after { display:none; }
+    .timeline-content { font-size:13px; color:#475569; }
+    .timeline-content strong { color:#0F172A; font-weight:600; display:block; }
+    .timeline-content span  { font-size:12px; color:#94A3B8; }
+
+    .empty-rx {
+      text-align:center; padding:60px 20px; color:#94A3B8;
+    }
+    .empty-rx .empty-icon { font-size:48px; margin-bottom:12px; }
+    .empty-rx p { font-size:15px; }
+
+    @media(max-width:768px) {
+      .rx-drugs-grid { grid-template-columns:1fr 1fr; }
+    }
+    @media(max-width:500px) {
+      .rx-drugs-grid { grid-template-columns:1fr; }
+      .med-summary-grid { grid-template-columns:1fr 1fr; }
+    }
+  </style>
+</head>
+<body>
+<!-- ── NAV ── -->
+<nav class="navbar">
+  <div class="nav-container">
+    <a href="index.html" class="nav-logo">
+      <div class="logo-icon">🏥</div>
+      MedCare
+    </a>
+    <div class="nav-links">
+      <a href="index.html">Home</a>
+      <a href="dashboard.html">Dashboard</a>
+      <a href="medications.html" class="active">Medications</a>
+    </div>
+    <div class="nav-auth" id="navAuth"></div>
+  </div>
+</nav>
+
+<!-- ── DASHBOARD LAYOUT ── -->
+<div class="dashboard-layout">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="sidebar-user" id="sidebarUser">
+      <div class="user-avatar" id="sidebarAvatar">--</div>
+      <div class="user-name"  id="sidebarName">Loading…</div>
+      <div class="user-role"  id="sidebarRole">Patient</div>
+    </div>
+    <nav class="sidebar-nav">
+      <a href="dashboard.html"  class="sidebar-link">
+        <span class="link-icon">📊</span> Dashboard
+      </a>
+      <a href="dashboard.html?action=book" class="sidebar-link">
+        <span class="link-icon">📅</span> Book Appointment
+      </a>
+      <a href="medications.html" class="sidebar-link active">
+        <span class="link-icon">💊</span> Medications
+      </a>
+      <a href="dashboard.html?section=ai" class="sidebar-link">
+        <span class="link-icon">🤖</span> AI Settings
+      </a>
+      <a href="#" class="sidebar-link" id="sidebarLogout" onclick="logout(); return false;">
+        <span class="link-icon">🚪</span> Logout
+      </a>
+    </nav>
+  </aside>
+
+  <!-- MAIN CONTENT -->
+  <main class="dashboard-main">
+
+    <!-- PAGE HEADER -->
+    <div class="dash-header">
+      <div>
+        <h1 class="dash-title">💊 My Medications</h1>
+        <p class="dash-subtitle">View your current and past prescriptions from MedCare doctors</p>
+      </div>
+    </div>
+
+    <!-- SUMMARY CARDS -->
+    <div class="med-summary-grid" id="medSummaryGrid">
+      <div class="med-summary-card">
+        <div class="ms-number" id="sumActive">–</div>
+        <div class="ms-label">Active Medications</div>
+      </div>
+      <div class="med-summary-card">
+        <div class="ms-number" id="sumCompleted">–</div>
+        <div class="ms-label">Completed Courses</div>
+      </div>
+      <div class="med-summary-card">
+        <div class="ms-number" id="sumTotal">–</div>
+        <div class="ms-label">Total Prescriptions</div>
+      </div>
+      <div class="med-summary-card">
+        <div class="ms-number" id="sumDoctors">–</div>
+        <div class="ms-label">Doctors Consulted</div>
+      </div>
+    </div>
+
+    <!-- FILTER TABS -->
+    <div class="filter-tabs">
+      <button class="filter-tab active" onclick="filterRx('all',this)">All Prescriptions</button>
+      <button class="filter-tab" onclick="filterRx('active',this)">Active</button>
+      <button class="filter-tab" onclick="filterRx('completed',this)">Completed</button>
+    </div>
+
+    <!-- PRESCRIPTION LIST -->
+    <div id="rxList">
+      <div class="empty-rx">
+        <div class="empty-icon">⏳</div>
+        <p>Loading prescriptions…</p>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<!-- ── SCRIPTS ── -->
+<script src="js/app.js"></script>
+<script>
+// ── Init ──────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', () => {
+  requireAuth();
+  initializeData();
+
+  const user = getCurrentUser();
+  if (!user || user.role === 'doctor') {
+    window.location.href = 'login.html';
+    return;
+  }
+
+  // Sidebar
+  document.getElementById('sidebarAvatar').textContent = getInitials(user.firstName, user.lastName);
+  document.getElementById('sidebarName').textContent   = `${user.firstName} ${user.lastName}`;
+  document.getElementById('sidebarRole').textContent   = 'Patient';
+  updateNavAuth();
+
+  // Seed demo prescriptions if first time
+  seedDemoPrescriptions(user.id);
+
+  renderAll();
+});
+
+// ── Data helpers ──────────────────────────────────────────
+let currentFilter = 'all';
+let allRx = [];
+
+function renderAll() {
+  const user = getCurrentUser();
+  allRx = getPrescriptions(user.id);
+
+  // Summary
+  const active    = allRx.filter(r => r.status === 'active').length;
+  const completed = allRx.filter(r => r.status === 'completed').length;
+  const doctors   = [...new Set(allRx.map(r => r.doctorId))].length;
+  document.getElementById('sumActive').textContent    = active;
+  document.getElementById('sumCompleted').textContent = completed;
+  document.getElementById('sumTotal').textContent     = allRx.length;
+  document.getElementById('sumDoctors').textContent   = doctors;
+
+  renderRxList(currentFilter);
+}
+
+function filterRx(filter, btn) {
+  currentFilter = filter;
+  document.querySelectorAll('.filter-tab').forEach(t => t.classList.remove('active'));
+  btn.classList.add('active');
+  renderRxList(filter);
+}
+
+function renderRxList(filter) {
+  const list = document.getElementById('rxList');
+  let items = filter === 'all' ? allRx : allRx.filter(r => r.status === filter);
+
+  if (!items.length) {
+    list.innerHTML = `
+      <div class="empty-rx">
+        <div class="empty-icon">💊</div>
+        <p>No ${filter === 'all' ? '' : filter + ' '}prescriptions found.</p>
+      </div>`;
+    return;
+  }
+
+  // Sort: active first, then by date desc
+  items = items.slice().sort((a,b) => {
+    if (a.status === 'active' && b.status !== 'active') return -1;
+    if (a.status !== 'active' && b.status === 'active') return 1;
+    return new Date(b.issuedDate) - new Date(a.issuedDate);
+  });
+
+  list.innerHTML = items.map(rx => rxCard(rx)).join('');
+
+  // Animate refill bars
+  requestAnimationFrame(() => {
+    document.querySelectorAll('.refill-fill').forEach(el => {
+      el.style.width = el.dataset.width + '%';
+    });
+  });
+}
+
+function refillPercent(rx) {
+  if (!rx.refillDate) return 80;
+  const issued = new Date(rx.issuedDate);
+  const refill = new Date(rx.refillDate);
+  const now    = new Date();
+  const total  = refill - issued;
+  const elapsed= now - issued;
+  const pct    = Math.max(0, Math.min(100, 100 - (elapsed / total * 100)));
+  return Math.round(pct);
+}
+
+function rxCard(rx) {
+  const doctor   = getDoctorById(rx.doctorId);
+  const deptName = rx.department || (doctor ? doctor.department : 'General');
+  const pct      = refillPercent(rx);
+  const isLow    = pct < 25;
+
+  const drugsHtml = (rx.medications || []).map(med => `
+    <div class="drug-pill">
+      <div class="drug-icon">${med.icon || '💊'}</div>
+      <div>
+        <div class="drug-name">${med.name}</div>
+        <div class="drug-dosage">${med.dosage} · ${med.frequency}</div>
+      </div>
+    </div>`).join('');
+
+  const instructionHtml = rx.instructions ? `
+    <div class="instruction-box">
+      <strong>📋 Doctor's Instructions</strong>
+      ${rx.instructions}
+    </div>` : '';
+
+  const refillHtml = rx.status === 'active' ? `
+    <div class="refill-bar-wrap">
+      <div class="refill-label">
+        <span>Supply remaining</span>
+        <span>${pct}%</span>
+      </div>
+      <div class="refill-bar">
+        <div class="refill-fill${isLow?' low':''}" data-width="${pct}" style="width:0%"></div>
+      </div>
+      ${isLow ? '<p style="font-size:11px;color:#EF4444;margin-top:4px;">⚠ Running low — contact your doctor for a refill</p>' : ''}
+    </div>` : '';
+
+  return `
+  <div class="rx-card">
+    <div class="rx-card-header">
+      <div>
+        <div class="rx-title">Rx #${rx.id.slice(-6).toUpperCase()}</div>
+        <div class="rx-meta">
+          Dr. ${doctor ? doctor.name : rx.doctorName || 'MedCare Physician'} ·
+          ${deptName} · ${formatDate(rx.issuedDate)}
+        </div>
+      </div>
+      <span class="med-status-badge ${rx.status}">
+        ${rx.status === 'active' ? '🟢' : rx.status === 'completed' ? '✅' : '⏸'} ${rx.status}
+      </span>
+    </div>
+
+    <div class="rx-drugs-grid">${drugsHtml}</div>
+    ${instructionHtml}
+    ${refillHtml}
+
+    <div class="rx-footer">
+      <div class="rx-footer-info">
+        ${rx.refillDate
+          ? `Valid until: <span>${formatDate(rx.refillDate)}</span>`
+          : `Issued: <span>${formatDate(rx.issuedDate)}</span>`}
+        ${rx.diagnosis ? ` · Diagnosis: <span>${rx.diagnosis}</span>` : ''}
+      </div>
+      <div style="display:flex;align-items:center;gap:12px;">
+        ${rx.status === 'active' ? `
+        <label class="reminder-toggle" onclick="toggleReminder('${rx.id}', this)">
+          <div class="toggle-switch ${rx.reminder ? 'on' : ''}" id="toggle_${rx.id}"></div>
+          Reminders
+        </label>` : ''}
+        <button class="btn-download-rx" onclick="downloadRx('${rx.id}')">
+          📄 View Details
+        </button>
+      </div>
+    </div>
+  </div>`;
+}
+
+// ── Actions ───────────────────────────────────────────────
+function toggleReminder(rxId, labelEl) {
+  const rxArr = JSON.parse(localStorage.getItem('hb_prescriptions') || '[]');
+  const idx   = rxArr.findIndex(r => r.id === rxId);
+  if (idx < 0) return;
+  rxArr[idx].reminder = !rxArr[idx].reminder;
+  localStorage.setItem('hb_prescriptions', JSON.stringify(rxArr));
+  const toggle = document.getElementById(`toggle_${rxId}`);
+  toggle.classList.toggle('on', rxArr[idx].reminder);
+  showToast(rxArr[idx].reminder ? '🔔 Reminder enabled' : '🔕 Reminder disabled');
+  allRx = allRx.map(r => r.id === rxId ? {...r, reminder: rxArr[idx].reminder} : r);
+}
+
+function downloadRx(rxId) {
+  const rx     = allRx.find(r => r.id === rxId);
+  if (!rx) return;
+  const doctor = getDoctorById(rx.doctorId);
+  const user   = getCurrentUser();
+  const meds   = (rx.medications || []).map(m =>
+    `  • ${m.name} — ${m.dosage}, ${m.frequency} (${m.duration})`
+  ).join('\n');
+
+  const txt = `
+════════════════════════════════════
+         MedCare Hospital
+        PRESCRIPTION RECEIPT
+════════════════════════════════════
+Rx ID      : ${rx.id.slice(-6).toUpperCase()}
+Patient    : ${user.firstName} ${user.lastName}
+Doctor     : Dr. ${doctor ? doctor.name : rx.doctorName}
+Department : ${rx.department || 'General'}
+Date       : ${formatDate(rx.issuedDate)}
+Status     : ${rx.status.toUpperCase()}
+${rx.diagnosis ? `Diagnosis  : ${rx.diagnosis}` : ''}
+
+MEDICATIONS:
+${meds}
+
+${rx.instructions ? `INSTRUCTIONS:\n${rx.instructions}` : ''}
+
+${rx.refillDate ? `Valid Until: ${formatDate(rx.refillDate)}` : ''}
+
+────────────────────────────────────
+This is a digitally generated receipt.
+For queries call: 1800-123-4567
+════════════════════════════════════
+`.trim();
+
+  const blob = new Blob([txt], {type:'text/plain'});
+  const a    = document.createElement('a');
+  a.href     = URL.createObjectURL(blob);
+  a.download = `prescription_${rx.id.slice(-6)}.txt`;
+  a.click();
+  showToast('📄 Prescription downloaded!');
+}
+</script>
+</body>
+</html>

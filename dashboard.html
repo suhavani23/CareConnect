@@ -1,0 +1,817 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>My Dashboard — MedCare</title>
+  <link rel="stylesheet" href="css/styles.css" />
+  <style>
+    .welcome-banner {
+      background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary-light) 100%);
+      border-radius: var(--radius-xl); padding: 2rem; color: #fff; margin-bottom: 2rem;
+      display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;
+    }
+    .welcome-text h3 { color: #fff; margin-bottom: 4px; font-size: 1.5rem; }
+    .welcome-text p { color: rgba(255,255,255,0.85); font-size: 0.9rem; }
+    .welcome-actions { display: flex; gap: 10px; flex-wrap: wrap; }
+    .quick-action-card {
+      background: var(--white); border: 1px solid var(--border-light); border-radius: var(--radius-lg);
+      padding: 1.5rem; text-align: center; cursor: pointer; transition: all var(--transition);
+      display: flex; flex-direction: column; align-items: center; gap: 0.75rem;
+    }
+    .quick-action-card:hover { box-shadow: var(--shadow-lg); transform: translateY(-3px); border-color: var(--primary-light); }
+    .qa-icon { width: 60px; height: 60px; border-radius: var(--radius-lg); background: var(--primary-pale); display: flex; align-items: center; justify-content: center; font-size: 1.8rem; }
+    .qa-title { font-weight: 700; font-size: 0.95rem; }
+    .qa-desc { font-size: 0.8rem; color: var(--text-light); }
+    .section-card { background: var(--white); border: 1px solid var(--border-light); border-radius: var(--radius-lg); overflow: hidden; }
+    .sc-header { padding: 1.25rem 1.5rem; border-bottom: 1px solid var(--border-light); display: flex; align-items: center; justify-content: space-between; }
+    .sc-body { padding: 1.5rem; }
+    .profile-info-item { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--border-light); font-size: 0.88rem; }
+    .profile-info-item:last-child { border-bottom: none; }
+    .profile-info-label { color: var(--text-light); }
+    .profile-info-val { font-weight: 600; }
+    /* HF Key Alert */
+    .hf-setup-banner { background: var(--warning-light); border: 1px solid #FCD34D; border-radius: var(--radius); padding: 1rem 1.25rem; margin-bottom: 1.5rem; display: flex; align-items: center; gap: 12px; }
+    .hf-setup-banner button { margin-left: auto; flex-shrink: 0; }
+    .hf-setup-text { font-size: 0.88rem; color: #92400E; }
+    .hf-setup-text strong { display: block; margin-bottom: 2px; }
+  </style>
+</head>
+<body>
+
+<!-- Navbar -->
+<nav class="navbar">
+  <a href="index.html" class="nav-logo">
+    <div class="logo-icon">🏥</div>
+    MedCare
+  </a>
+  <ul class="nav-links">
+    <li><a href="dashboard.html" class="active">Dashboard</a></li>
+    <li><a href="medications.html">Medications</a></li>
+    <li><a href="index.html">Home</a></li>
+  </ul>
+  <div class="nav-actions">
+    <div style="display:flex;align-items:center;gap:10px;">
+      <div id="nav-avatar-dash" style="width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,var(--primary-light),var(--primary-dark));display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:0.85rem;cursor:pointer;"></div>
+      <button class="btn btn-ghost btn-sm" onclick="logout()">Logout</button>
+    </div>
+  </div>
+</nav>
+
+<!-- Main Layout -->
+<div class="dash-layout">
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="sidebar-user" id="sidebar-user">
+      <div class="sidebar-user-avatar" id="sidebar-avatar"></div>
+      <div>
+        <div class="sidebar-user-name" id="sidebar-name">Loading...</div>
+        <div class="sidebar-user-role">Patient</div>
+      </div>
+    </div>
+    <div class="sidebar-section-label">Main Menu</div>
+    <ul class="sidebar-nav">
+      <li><a href="dashboard.html" class="active"><span class="nav-icon">🏠</span> Dashboard</a></li>
+      <li><a href="#" onclick="openBookingWizard()"><span class="nav-icon">📅</span> Book Appointment</a></li>
+      <li><a href="medications.html"><span class="nav-icon">💊</span> Medications</a></li>
+    </ul>
+    <div class="sidebar-section-label">Account</div>
+    <ul class="sidebar-nav">
+      <li><a href="#" onclick="document.getElementById('hf-modal').style.display='flex'"><span class="nav-icon">🤖</span> AI Settings</a></li>
+      <li><a href="#" onclick="logout()"><span class="nav-icon">🚪</span> Logout</a></li>
+    </ul>
+  </aside>
+
+  <!-- Main Content -->
+  <main class="dash-main">
+
+    <!-- HF API Key Alert -->
+    <div class="hf-setup-banner" id="hf-banner" style="display:none;">
+      <span style="font-size:1.5rem;">🤖</span>
+      <div class="hf-setup-text">
+        <strong>Set Up AI Features</strong>
+        Add your free Hugging Face API key to enable AI symptom analysis & smart doctor matching.
+      </div>
+      <button class="btn btn-sm" style="background:#F59E0B;color:#fff;border:none;" onclick="document.getElementById('hf-modal').style.display='flex'">Setup →</button>
+    </div>
+
+    <!-- Welcome Banner -->
+    <div class="welcome-banner">
+      <div class="welcome-text">
+        <h3 id="welcome-name">Good morning! 👋</h3>
+        <p id="welcome-sub">Here's a summary of your health journey at MedCare.</p>
+      </div>
+      <div class="welcome-actions">
+        <button class="btn btn-white btn-lg" onclick="openBookingWizard()">📅 Book Appointment</button>
+        <a href="medications.html" class="btn btn-outline-white btn-lg">💊 Medications</a>
+      </div>
+    </div>
+
+    <!-- Stats -->
+    <div class="stats-grid" id="stats-grid">
+      <div class="stat-card"><div class="stat-icon">📅</div><div><div class="stat-num" id="stat-total">0</div><div class="stat-label">Total Appointments</div></div></div>
+      <div class="stat-card"><div class="stat-icon">✅</div><div><div class="stat-num" id="stat-confirmed">0</div><div class="stat-label">Confirmed</div></div></div>
+      <div class="stat-card"><div class="stat-icon">💊</div><div><div class="stat-num" id="stat-rx">0</div><div class="stat-label">Prescriptions</div></div></div>
+      <div class="stat-card"><div class="stat-icon">🏥</div><div><div class="stat-num" id="stat-docs">0</div><div class="stat-label">Doctors Seen</div></div></div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="grid-3 mb-4">
+      <div class="quick-action-card" onclick="openBookingWizard()">
+        <div class="qa-icon">📅</div>
+        <div class="qa-title">Book Appointment</div>
+        <div class="qa-desc">Schedule with AI-powered doctor matching</div>
+      </div>
+      <a href="medications.html" class="quick-action-card" style="text-decoration:none;color:inherit;">
+        <div class="qa-icon">💊</div>
+        <div class="qa-title">My Medications</div>
+        <div class="qa-desc">View current & past prescriptions</div>
+      </a>
+      <div class="quick-action-card" onclick="document.getElementById('hf-modal').style.display='flex'">
+        <div class="qa-icon">🤖</div>
+        <div class="qa-title">AI Settings</div>
+        <div class="qa-desc">Configure Hugging Face API for AI features</div>
+      </div>
+    </div>
+
+    <!-- Appointments + Profile -->
+    <div class="grid-2">
+      <div class="section-card">
+        <div class="sc-header">
+          <h4>Upcoming Appointments</h4>
+          <button class="btn btn-primary btn-sm" onclick="openBookingWizard()">+ Book New</button>
+        </div>
+        <div class="sc-body" id="appointments-list">
+          <div style="text-align:center;color:var(--text-muted);padding:2rem;">
+            <div style="font-size:2.5rem;margin-bottom:0.5rem;">📭</div>
+            No upcoming appointments
+          </div>
+        </div>
+      </div>
+
+      <div class="section-card">
+        <div class="sc-header">
+          <h4>My Profile</h4>
+          <span class="badge badge-green">Verified</span>
+        </div>
+        <div class="sc-body" id="profile-info"></div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<!-- ===================================================
+     BOOKING WIZARD MODAL
+=================================================== -->
+<div class="wizard-overlay" id="booking-wizard">
+  <div class="wizard-modal">
+    <div class="wizard-header">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.75rem;">
+        <h3 style="font-size:1.1rem;margin:0;">Book an Appointment</h3>
+        <button onclick="closeBookingWizard()" style="background:none;border:none;cursor:pointer;font-size:1.2rem;color:var(--text-light);">✕</button>
+      </div>
+      <div class="wizard-steps" id="wizard-steps">
+        <div class="wizard-step active" id="ws-1">
+          <div class="wizard-step-num">1</div>
+          <div class="wizard-step-label">Symptoms</div>
+        </div>
+        <div class="wizard-step" id="ws-2">
+          <div class="wizard-step-num">2</div>
+          <div class="wizard-step-label">Analysing</div>
+        </div>
+        <div class="wizard-step" id="ws-3">
+          <div class="wizard-step-num">3</div>
+          <div class="wizard-step-label">Doctor</div>
+        </div>
+        <div class="wizard-step" id="ws-4">
+          <div class="wizard-step-num">4</div>
+          <div class="wizard-step-label">Slots</div>
+        </div>
+        <div class="wizard-step" id="ws-5">
+          <div class="wizard-step-num">5</div>
+          <div class="wizard-step-label">Confirm</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- STEP 1: Symptoms -->
+    <div class="wizard-body" id="wstep-1">
+      <div class="section-eyebrow mb-2">Tell us what's bothering you</div>
+      <div class="form-group">
+        <label class="form-label">Symptoms <span style="color:var(--danger);">*</span></label>
+        <div class="option-group" id="symptom-options">
+          <div class="option-pill"><input type="checkbox" id="s-fever" value="Fever"><label for="s-fever">🌡️ Fever</label></div>
+          <div class="option-pill"><input type="checkbox" id="s-cough" value="Cough"><label for="s-cough">😷 Cough</label></div>
+          <div class="option-pill"><input type="checkbox" id="s-headache" value="Headache"><label for="s-headache">🤕 Headache</label></div>
+          <div class="option-pill"><input type="checkbox" id="s-chest" value="Chest pain"><label for="s-chest">💔 Chest Pain</label></div>
+          <div class="option-pill"><input type="checkbox" id="s-stomach" value="Stomach pain"><label for="s-stomach">🫃 Stomach Pain</label></div>
+          <div class="option-pill"><input type="checkbox" id="s-breath" value="Shortness of breath"><label for="s-breath">😮‍💨 Shortness of Breath</label></div>
+          <div class="option-pill"><input type="checkbox" id="s-joint" value="Joint pain"><label for="s-joint">🦴 Joint Pain</label></div>
+          <div class="option-pill"><input type="checkbox" id="s-skin" value="Skin rash"><label for="s-skin">🔴 Skin Rash</label></div>
+          <div class="option-pill"><input type="checkbox" id="s-dizzy" value="Dizziness"><label for="s-dizzy">😵 Dizziness</label></div>
+          <div class="option-pill"><input type="checkbox" id="s-nausea" value="Nausea"><label for="s-nausea">🤢 Nausea</label></div>
+          <div class="option-pill"><input type="checkbox" id="s-eye" value="Eye problems"><label for="s-eye">👁️ Eye Problems</label></div>
+          <div class="option-pill"><input type="checkbox" id="s-tooth" value="Tooth pain"><label for="s-tooth">🦷 Tooth Pain</label></div>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Affected Area</label>
+          <select class="form-control" id="affected-area">
+            <option value="">Select area...</option>
+            <option>Head & Face</option>
+            <option>Chest & Heart</option>
+            <option>Abdomen & Stomach</option>
+            <option>Back & Spine</option>
+            <option>Arms & Hands</option>
+            <option>Legs & Feet</option>
+            <option>Joints (General)</option>
+            <option>Skin</option>
+            <option>Eyes</option>
+            <option>Mouth & Teeth</option>
+            <option>Whole Body / General</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Pain Location (if any)</label>
+          <input type="text" class="form-control" id="pain-location" placeholder="e.g. Left chest, lower back..." />
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Rate Your Pain (0 = No pain, 10 = Worst pain)</label>
+        <div class="pain-scale" id="pain-scale">
+          <button class="pain-btn" data-val="0" onclick="selectPain(0, this)">0</button>
+          <button class="pain-btn" data-val="1" onclick="selectPain(1, this)">1</button>
+          <button class="pain-btn" data-val="2" onclick="selectPain(2, this)">2</button>
+          <button class="pain-btn" data-val="3" onclick="selectPain(3, this)">3</button>
+          <button class="pain-btn" data-val="4" onclick="selectPain(4, this)">4</button>
+          <button class="pain-btn" data-val="5" onclick="selectPain(5, this)">5</button>
+          <button class="pain-btn" data-val="6" onclick="selectPain(6, this)">6</button>
+          <button class="pain-btn" data-val="7" onclick="selectPain(7, this)">7</button>
+          <button class="pain-btn" data-val="8" onclick="selectPain(8, this)">8</button>
+          <button class="pain-btn" data-val="9" onclick="selectPain(9, this)">9</button>
+          <button class="pain-btn" data-val="10" onclick="selectPain(10, this)">10</button>
+        </div>
+        <input type="hidden" id="pain-rating" value="0" />
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Additional Description <span style="color:var(--text-muted);font-weight:400;">(optional)</span></label>
+        <textarea class="form-control" id="symptoms-desc" placeholder="Describe when it started, what makes it better or worse, any other relevant details..."></textarea>
+      </div>
+
+      <div id="step1-error" class="alert alert-error" style="display:none;"></div>
+    </div>
+
+    <!-- STEP 2: AI Processing -->
+    <div class="wizard-body" id="wstep-2" style="display:none;">
+      <div class="ai-processing">
+        <div class="ai-spinner"></div>
+        <h3 id="ai-processing-title">Analysing Your Symptoms</h3>
+        <p id="ai-processing-sub" class="ai-pulse" style="margin-top:0.5rem;">Our AI is reviewing your information to determine the best care pathway...</p>
+        <div style="margin-top:1.5rem;display:flex;flex-direction:column;gap:8px;" id="ai-steps-list">
+          <div class="ai-step-item" style="display:flex;align-items:center;gap:10px;font-size:0.85rem;color:var(--text-light);">
+            <span id="ai-step-1-icon">⏳</span> Evaluating symptom severity...
+          </div>
+          <div class="ai-step-item" style="display:flex;align-items:center;gap:10px;font-size:0.85rem;color:var(--text-light);">
+            <span id="ai-step-2-icon">⏳</span> Determining urgency score...
+          </div>
+          <div class="ai-step-item" style="display:flex;align-items:center;gap:10px;font-size:0.85rem;color:var(--text-light);">
+            <span id="ai-step-3-icon">⏳</span> Routing to appropriate department...
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- STEP 3: Doctor Preference -->
+    <div class="wizard-body" id="wstep-3" style="display:none;">
+      <div class="section-eyebrow mb-1">Choose your care pathway</div>
+      <h4 style="margin-bottom:1.5rem;">Do you have a doctor in mind?</h4>
+      <div class="toggle-group">
+        <div class="toggle-option active" id="pref-no" onclick="setDoctorPref(false, this)">🤖 Let AI choose for me</div>
+        <div class="toggle-option" id="pref-yes" onclick="setDoctorPref(true, this)">👩‍⚕️ I have a doctor in mind</div>
+      </div>
+
+      <!-- AI recommended info -->
+      <div id="ai-recommendation" style="display:block;">
+        <div class="alert alert-success mb-3" id="ai-dept-result">
+          <span>🏥</span><span>Loading recommendation...</span>
+        </div>
+        <div id="ai-recommended-doctor-card"></div>
+      </div>
+
+      <!-- Manual doctor selection -->
+      <div id="manual-selection" style="display:none;">
+        <div class="form-group">
+          <label class="form-label">Filter by Department</label>
+          <select class="form-control" id="dept-filter-select" onchange="filterDoctors()">
+            <option value="">All Departments</option>
+          </select>
+        </div>
+        <div id="doctor-list"></div>
+      </div>
+    </div>
+
+    <!-- STEP 4: Slot Selection -->
+    <div class="wizard-body" id="wstep-4" style="display:none;">
+      <div class="section-eyebrow mb-1">Pick a time slot</div>
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:1.25rem;">
+        <div class="doctor-avatar" style="width:44px;height:44px;border-radius:50%;background:var(--primary-pale);display:flex;align-items:center;justify-content:center;font-size:1.2rem;" id="slot-doctor-emoji">👩‍⚕️</div>
+        <div>
+          <div style="font-weight:700;font-size:0.95rem;" id="slot-doctor-name">Dr. Name</div>
+          <div style="font-size:0.8rem;color:var(--primary);" id="slot-doctor-spec">Speciality</div>
+        </div>
+      </div>
+      <div class="slot-date-tabs" id="slot-date-tabs"></div>
+      <div style="display:flex;gap:12px;margin-bottom:1rem;font-size:0.78rem;">
+        <span style="display:flex;align-items:center;gap:4px;"><span style="width:12px;height:12px;border-radius:3px;background:var(--primary-pale);border:1px solid var(--primary-light);display:inline-block;"></span>Available</span>
+        <span style="display:flex;align-items:center;gap:4px;"><span style="width:12px;height:12px;border-radius:3px;background:#FFF7F7;border:1px solid #FECACA;display:inline-block;"></span>Booked</span>
+        <span style="display:flex;align-items:center;gap:4px;"><span style="width:12px;height:12px;border-radius:3px;background:var(--primary);display:inline-block;"></span>Selected</span>
+      </div>
+      <div class="slot-grid" id="slot-grid"></div>
+      <input type="hidden" id="selected-slot-id" />
+      <div id="slot-error" style="color:var(--danger);font-size:0.82rem;margin-top:0.75rem;display:none;">Please select a time slot to continue.</div>
+    </div>
+
+    <!-- STEP 5: Confirmation -->
+    <div class="wizard-body" id="wstep-5" style="display:none;">
+      <div class="confirm-card">
+        <div class="confirm-icon">✅</div>
+        <h3 style="color:var(--primary-dark);">Appointment Confirmed!</h3>
+        <p style="color:var(--text-medium);margin-top:0.5rem;">Your appointment has been booked successfully. You'll receive a confirmation SMS shortly.</p>
+        <div class="confirm-details" id="confirm-details"></div>
+        <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;">
+          <button class="btn btn-primary" onclick="closeBookingWizard()">Done ✓</button>
+          <a href="index.html#departments" class="btn btn-outline">Browse More Doctors</a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Wizard Footer -->
+    <div class="wizard-footer" id="wizard-footer">
+      <button class="btn btn-ghost" id="wiz-back" onclick="wizardBack()" style="display:none;">← Back</button>
+      <div style="font-size:0.8rem;color:var(--text-muted);" id="wiz-step-text">Step 1 of 5</div>
+      <button class="btn btn-primary" id="wiz-next" onclick="wizardNext()">Continue →</button>
+    </div>
+  </div>
+</div>
+
+<!-- HF API Key Modal -->
+<div class="modal-overlay" id="hf-modal" style="display:none;">
+  <div class="modal-box">
+    <h3>🤖 AI Configuration</h3>
+    <p>Enter your free Hugging Face API key to enable AI-powered symptom analysis and intelligent doctor matching.<br><a href="https://huggingface.co/settings/tokens" target="_blank" style="color:var(--primary);">Get your free key at huggingface.co →</a></p>
+    <div class="form-group">
+      <label class="form-label">Hugging Face API Key</label>
+      <input type="password" class="form-control" id="hf-key-input" placeholder="hf_..." />
+      <div class="form-hint">Your key is stored locally and never sent anywhere except Hugging Face.</div>
+    </div>
+    <div style="display:flex;gap:10px;">
+      <button class="btn btn-primary btn-block" onclick="saveHFKey()">Save Key</button>
+      <button class="btn btn-ghost btn-block" onclick="document.getElementById('hf-modal').style.display='none'">Cancel</button>
+    </div>
+    <div style="margin-top:1rem;padding:10px;background:var(--info-light);border-radius:var(--radius-sm);font-size:0.78rem;color:#1D4ED8;">
+      💡 <strong>Without an API key,</strong> the system uses rule-based fallback logic for department assignment. AI features enhance accuracy but aren't required.
+    </div>
+  </div>
+</div>
+
+<script src="js/app.js"></script>
+<script src="js/ai.js"></script>
+<script>
+let currentWizardStep = 1;
+let selectedPain = 0;
+let selectedDoctor = null;
+let selectedSlotId = null;
+let selectedDate = null;
+let symptomData = {};
+let aiResult = {};
+let hasDocInMind = false;
+let currentUser = null;
+
+document.addEventListener('DOMContentLoaded', () => {
+  currentUser = requireAuth();
+  if (!currentUser) return;
+
+  // Populate UI
+  const initials = getInitials(currentUser.name || 'P');
+  document.getElementById('nav-avatar-dash').textContent = initials;
+  document.getElementById('sidebar-avatar').textContent = initials;
+  document.getElementById('sidebar-name').textContent = currentUser.name?.split(' ')[0] || 'Patient';
+
+  const hour = new Date().getHours();
+  const greeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
+  document.getElementById('welcome-name').textContent = `${greeting}, ${currentUser.name?.split(' ')[0] || 'there'}! 👋`;
+  document.getElementById('welcome-sub').textContent = `Manage your appointments, medications and health records.`;
+
+  // Stats
+  const apts = getAppointments({ patientId: currentUser.id });
+  const rxs = getPrescriptions(currentUser.id);
+  const uniqueDocs = [...new Set(apts.map(a => a.doctorId))].length;
+  document.getElementById('stat-total').textContent = apts.length;
+  document.getElementById('stat-confirmed').textContent = apts.filter(a => a.status === 'confirmed').length;
+  document.getElementById('stat-rx').textContent = rxs.length;
+  document.getElementById('stat-docs').textContent = uniqueDocs;
+
+  // Appointments list
+  renderAppointments();
+
+  // Profile
+  renderProfile();
+
+  // HF banner
+  if (!getHFKey()) {
+    document.getElementById('hf-banner').style.display = 'flex';
+  }
+
+  // Pre-fill HF key
+  if (getHFKey()) document.getElementById('hf-key-input').value = getHFKey();
+
+  // Doctor filter dropdown
+  const deptSelect = document.getElementById('dept-filter-select');
+  getDepartments().forEach(d => {
+    deptSelect.innerHTML += `<option value="${d.id}">${d.icon} ${d.name}</option>`;
+  });
+});
+
+function renderAppointments() {
+  const list = document.getElementById('appointments-list');
+  const apts = getAppointments({ patientId: currentUser.id });
+  if (apts.length === 0) {
+    list.innerHTML = `<div style="text-align:center;color:var(--text-muted);padding:2rem;">
+      <div style="font-size:2.5rem;margin-bottom:0.5rem;">📭</div>
+      <div>No appointments yet</div>
+      <button class="btn btn-primary btn-sm mt-2" onclick="openBookingWizard()">Book Now</button>
+    </div>`;
+    return;
+  }
+  list.innerHTML = apts.slice(0, 5).map(apt => {
+    const doc = getDoctorById(apt.doctorId);
+    const dateObj = new Date(apt.date + 'T00:00:00');
+    const day = dateObj.getDate();
+    const month = dateObj.toLocaleString('en', { month: 'short' });
+    return `<div class="appointment-card mb-2">
+      <div class="apt-date-box"><div class="apt-date-day">${day}</div><div class="apt-date-month">${month}</div></div>
+      <div>
+        <div class="apt-doctor">${doc?.name || 'Doctor'}</div>
+        <div class="apt-dept">${doc?.speciality || ''}</div>
+        <div class="apt-time">🕐 ${formatTime(apt.time)}</div>
+      </div>
+      <span class="badge badge-green">Confirmed</span>
+    </div>`;
+  }).join('');
+}
+
+function renderProfile() {
+  const container = document.getElementById('profile-info');
+  const u = currentUser;
+  const items = [
+    ['Name', u.name],
+    ['Email', u.email],
+    ['Phone', u.phone || '—'],
+    ['Age', u.age || '—'],
+    ['Gender', u.gender ? (u.gender.charAt(0).toUpperCase() + u.gender.slice(1)) : '—'],
+    ['Blood Group', u.bloodGroup || '—'],
+    ['Allergies', u.allergies?.join(', ') || 'None noted'],
+  ];
+  container.innerHTML = items.map(([l, v]) => `
+    <div class="profile-info-item">
+      <span class="profile-info-label">${l}</span>
+      <span class="profile-info-val">${v || '—'}</span>
+    </div>`).join('');
+}
+
+// =============================================
+// BOOKING WIZARD
+// =============================================
+
+function openBookingWizard() {
+  document.getElementById('booking-wizard').classList.add('open');
+  resetWizard();
+}
+function closeBookingWizard() {
+  document.getElementById('booking-wizard').classList.remove('open');
+  renderAppointments();
+  const apts = getAppointments({ patientId: currentUser.id });
+  document.getElementById('stat-total').textContent = apts.length;
+  document.getElementById('stat-confirmed').textContent = apts.filter(a => a.status === 'confirmed').length;
+}
+function resetWizard() {
+  currentWizardStep = 1;
+  selectedPain = 0;
+  selectedDoctor = null;
+  selectedSlotId = null;
+  aiResult = {};
+  hasDocInMind = false;
+  document.querySelectorAll('.pain-btn').forEach(b => b.classList.remove('selected'));
+  document.querySelectorAll('#symptom-options input').forEach(c => c.checked = false);
+  document.getElementById('affected-area').value = '';
+  document.getElementById('pain-location').value = '';
+  document.getElementById('symptoms-desc').value = '';
+  document.getElementById('pain-rating').value = '0';
+  document.getElementById('selected-slot-id').value = '';
+  document.getElementById('step1-error').style.display = 'none';
+  goWizardStep(1);
+}
+
+function updateWizardStepUI(step) {
+  for (let i = 1; i <= 5; i++) {
+    const ws = document.getElementById(`ws-${i}`);
+    ws.classList.remove('active', 'done');
+    if (i < step) ws.classList.add('done');
+    if (i === step) ws.classList.add('active');
+    const num = ws.querySelector('.wizard-step-num');
+    num.textContent = i < step ? '✓' : i;
+  }
+
+  for (let i = 1; i <= 5; i++) {
+    const body = document.getElementById(`wstep-${i}`);
+    if (body) body.style.display = i === step ? 'block' : 'none';
+  }
+
+  const footer = document.getElementById('wizard-footer');
+  const backBtn = document.getElementById('wiz-back');
+  const nextBtn = document.getElementById('wiz-next');
+  const stepText = document.getElementById('wiz-step-text');
+
+  stepText.textContent = `Step ${step} of 5`;
+  backBtn.style.display = (step > 1 && step < 5) ? 'block' : 'none';
+  nextBtn.style.display = step < 5 ? 'block' : 'none';
+
+  if (step === 2) footer.style.display = 'none';
+  else footer.style.display = 'flex';
+
+  if (step === 3) nextBtn.textContent = 'Choose Slot →';
+  else if (step === 4) nextBtn.textContent = 'Confirm Booking →';
+  else nextBtn.textContent = 'Continue →';
+}
+
+function goWizardStep(step) {
+  currentWizardStep = step;
+  updateWizardStepUI(step);
+}
+
+function selectPain(val, btn) {
+  document.querySelectorAll('.pain-btn').forEach(b => b.classList.remove('selected'));
+  btn.classList.add('selected');
+  selectedPain = val;
+  document.getElementById('pain-rating').value = val;
+}
+
+function setDoctorPref(hasDoc, el) {
+  hasDocInMind = hasDoc;
+  document.querySelectorAll('.toggle-option').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('ai-recommendation').style.display = hasDoc ? 'none' : 'block';
+  document.getElementById('manual-selection').style.display = hasDoc ? 'block' : 'none';
+  if (hasDoc) renderDoctorList(null);
+}
+
+function filterDoctors() {
+  const deptId = document.getElementById('dept-filter-select').value;
+  renderDoctorList(deptId || null);
+}
+
+function renderDoctorList(deptId) {
+  const list = document.getElementById('doctor-list');
+  const docs = deptId ? getDoctorsByDept(deptId) : getDoctors();
+  list.innerHTML = docs.map(d => `
+    <div class="doctor-selector-card ${selectedDoctor?.id === d.id ? 'selected' : ''}" onclick="selectDoctor('${d.id}', this)">
+      <div class="doctor-selector-avatar">${d.emoji}</div>
+      <div class="doctor-selector-info">
+        <div class="doctor-selector-name">${d.name}</div>
+        <div class="doctor-selector-spec">★ ${d.rating} · ${d.experience} yrs · ${d.speciality}</div>
+      </div>
+      <div class="doctor-selector-check">${selectedDoctor?.id === d.id ? '✓' : ''}</div>
+    </div>`).join('');
+}
+
+function selectDoctor(docId, el) {
+  selectedDoctor = getDoctorById(docId);
+  document.querySelectorAll('.doctor-selector-card').forEach(c => {
+    c.classList.remove('selected');
+    c.querySelector('.doctor-selector-check').textContent = '';
+  });
+  el.classList.add('selected');
+  el.querySelector('.doctor-selector-check').textContent = '✓';
+}
+
+async function wizardNext() {
+  if (currentWizardStep === 1) {
+    // Validate symptoms
+    const checked = [...document.querySelectorAll('#symptom-options input:checked')].map(c => c.value);
+    const area = document.getElementById('affected-area').value;
+    if (checked.length === 0) {
+      const err = document.getElementById('step1-error');
+      err.innerHTML = '<span>⚠️</span><span>Please select at least one symptom.</span>';
+      err.style.display = 'flex';
+      return;
+    }
+    symptomData = {
+      symptoms: checked,
+      affectedArea: area || 'Not specified',
+      painLocation: document.getElementById('pain-location').value.trim(),
+      painRating: selectedPain,
+      description: document.getElementById('symptoms-desc').value.trim()
+    };
+    goWizardStep(2);
+    await runAIAnalysis();
+    return;
+  }
+  if (currentWizardStep === 3) {
+    if (!selectedDoctor) {
+      showToast('Please select a doctor to continue.', 'error');
+      return;
+    }
+    // Load slots
+    loadSlots();
+    goWizardStep(4);
+    return;
+  }
+  if (currentWizardStep === 4) {
+    if (!document.getElementById('selected-slot-id').value) {
+      document.getElementById('slot-error').style.display = 'block';
+      return;
+    }
+    await confirmBooking();
+    return;
+  }
+}
+
+function wizardBack() {
+  if (currentWizardStep > 1) goWizardStep(currentWizardStep - 1);
+}
+
+async function runAIAnalysis() {
+  const icons = ['ai-step-1-icon', 'ai-step-2-icon', 'ai-step-3-icon'];
+  const titles = ['Evaluating symptom severity...', 'Determining urgency score...', 'Routing to appropriate department...'];
+
+  // Animate steps
+  for (let i = 0; i < 3; i++) {
+    document.getElementById(titles[i] ? icons[i] : icons[i]).textContent = '🔄';
+    await new Promise(r => setTimeout(r, 600));
+    document.getElementById(icons[i]).textContent = '✅';
+  }
+
+  // Try AI
+  try {
+    document.getElementById('ai-processing-title').textContent = 'AI is thinking...';
+    const [urgency, dept] = await Promise.all([
+      getUrgencyScore(symptomData),
+      assignDepartment(symptomData)
+    ]);
+    aiResult = { urgency, dept };
+  } catch (e) {
+    // Fallback
+    aiResult = {
+      urgency: getFallbackUrgency(symptomData),
+      dept: getFallbackDepartment(symptomData)
+    };
+  }
+
+  // Select best doctor from assigned dept
+  if (!hasDocInMind) {
+    const deptDocs = getDoctorsByDept(aiResult.dept.department);
+    if (deptDocs.length > 0) {
+      selectedDoctor = selectBestDoctor(aiResult.dept.department, deptDocs.map(d => d.id));
+    }
+  }
+
+  // Show step 3
+  goWizardStep(3);
+  renderStep3();
+}
+
+function renderStep3() {
+  const deptInfo = getDeptById(aiResult.dept?.department || 'general');
+  const urgencyColors = { Low: 'green', Medium: 'yellow', High: 'red', Critical: 'red' };
+  const urgColor = urgencyColors[aiResult.urgency?.level] || 'blue';
+
+  // AI Recommendation box
+  document.getElementById('ai-dept-result').innerHTML = `
+    <span>🏥</span>
+    <div>
+      <strong>AI Recommendation:</strong> ${deptInfo?.name || 'General Medicine'} Department<br>
+      <span style="font-size:0.8rem;">${aiResult.dept?.reason || 'Based on your symptoms'}</span>
+    </div>
+    <span class="badge badge-${urgColor}" style="margin-left:auto;">⚡ ${aiResult.urgency?.level || 'Medium'} Priority</span>`;
+
+  // Show recommended doctor
+  if (!hasDocInMind && selectedDoctor) {
+    document.getElementById('ai-recommended-doctor-card').innerHTML = `
+      <div style="margin-top:1rem;">
+        <div style="font-size:0.75rem;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;color:var(--text-muted);margin-bottom:0.75rem;">Recommended Doctor</div>
+        <div class="doctor-selector-card selected" onclick="">
+          <div class="doctor-selector-avatar">${selectedDoctor.emoji}</div>
+          <div class="doctor-selector-info">
+            <div class="doctor-selector-name">${selectedDoctor.name}</div>
+            <div class="doctor-selector-spec">★ ${selectedDoctor.rating} · ${selectedDoctor.experience} yrs exp · ${selectedDoctor.speciality}</div>
+          </div>
+          <div class="doctor-selector-check">✓</div>
+        </div>
+        <div style="font-size:0.78rem;color:var(--text-muted);margin-top:6px;">
+          💡 AI matched this doctor based on your symptoms and department routing. You can switch to "I have a doctor in mind" to choose manually.
+        </div>
+      </div>`;
+  }
+}
+
+// ---- SLOTS ----
+function loadSlots() {
+  if (!selectedDoctor) return;
+  document.getElementById('slot-doctor-name').textContent = selectedDoctor.name;
+  document.getElementById('slot-doctor-spec').textContent = selectedDoctor.speciality;
+  document.getElementById('slot-doctor-emoji').textContent = selectedDoctor.emoji;
+
+  const dates = getDoctorAvailableDates(selectedDoctor.id);
+  const tabsEl = document.getElementById('slot-date-tabs');
+  tabsEl.innerHTML = '';
+  if (dates.length === 0) return;
+
+  dates.slice(0, 7).forEach((date, idx) => {
+    const d = new Date(date + 'T00:00:00');
+    const dayName = d.toLocaleString('en', { weekday: 'short' });
+    const dayNum = d.getDate();
+    const tab = document.createElement('div');
+    tab.className = `slot-date-tab${idx === 0 ? ' active' : ''}`;
+    tab.dataset.date = date;
+    tab.innerHTML = `<div class="day-name">${dayName}</div><div class="day-num">${dayNum}</div>`;
+    tab.onclick = () => selectDate(date, tab);
+    tabsEl.appendChild(tab);
+  });
+
+  selectDate(dates[0], tabsEl.firstChild);
+}
+
+function selectDate(date, tabEl) {
+  selectedDate = date;
+  document.querySelectorAll('.slot-date-tab').forEach(t => t.classList.remove('active'));
+  tabEl.classList.add('active');
+  selectedSlotId = null;
+  document.getElementById('selected-slot-id').value = '';
+
+  const slots = getDoctorSlots(selectedDoctor.id, date);
+  const grid = document.getElementById('slot-grid');
+  grid.innerHTML = slots.map(s => `
+    <button class="slot-btn ${s.booked ? 'booked' : 'available'}" 
+      ${s.booked ? 'disabled' : `onclick="selectSlot('${s.id}', this)"`}>
+      ${formatTime(s.time)}
+      ${s.booked ? '<br><span style="font-size:0.65rem;">Booked</span>' : ''}
+    </button>`).join('');
+}
+
+function selectSlot(slotId, btn) {
+  document.querySelectorAll('.slot-btn.available').forEach(b => b.classList.remove('selected'));
+  btn.classList.add('selected');
+  selectedSlotId = slotId;
+  document.getElementById('selected-slot-id').value = slotId;
+  document.getElementById('slot-error').style.display = 'none';
+}
+
+async function confirmBooking() {
+  const slotId = document.getElementById('selected-slot-id').value;
+  if (!slotId || !selectedDoctor) return;
+
+  const result = bookAppointment({
+    patientId: currentUser.id,
+    doctorId: selectedDoctor.id,
+    slotId,
+    date: selectedDate,
+    time: slotId.split('_')[2].replace(/(\d{2})(\d{2})/, '$1:$2'),
+    symptoms: symptomData.symptoms,
+    affectedArea: symptomData.affectedArea,
+    painRating: symptomData.painRating,
+    description: symptomData.description,
+    urgencyScore: aiResult.urgency?.score || 5,
+    urgencyLevel: aiResult.urgency?.level || 'Medium',
+    department: aiResult.dept?.department || selectedDoctor.department,
+    patientName: currentUser.name,
+  });
+
+  if (result.error) { showToast(result.error, 'error'); return; }
+
+  // Show confirmation
+  goWizardStep(5);
+  const apt = result.appointment;
+  document.getElementById('confirm-details').innerHTML = `
+    <div class="confirm-detail-row"><span class="label">Doctor</span><span class="value">${selectedDoctor.name}</span></div>
+    <div class="confirm-detail-row"><span class="label">Speciality</span><span class="value">${selectedDoctor.speciality}</span></div>
+    <div class="confirm-detail-row"><span class="label">Date</span><span class="value">${formatDate(apt.date)}</span></div>
+    <div class="confirm-detail-row"><span class="label">Time</span><span class="value">${formatTime(apt.time)}</span></div>
+    <div class="confirm-detail-row"><span class="label">Appointment ID</span><span class="value" style="font-size:0.78rem;color:var(--text-muted);">${apt.id}</span></div>`;
+}
+
+function saveHFKey() {
+  const key = document.getElementById('hf-key-input').value.trim();
+  if (!key.startsWith('hf_')) return showToast('API key should start with "hf_"', 'error');
+  setHFKey(key);
+  document.getElementById('hf-modal').style.display = 'none';
+  document.getElementById('hf-banner').style.display = 'none';
+  showToast('AI features enabled! 🤖', 'success');
+}
+</script>
+</body>
+</html>

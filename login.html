@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Login / Sign Up — MedCare Hospital</title>
+  <link rel="stylesheet" href="css/styles.css" />
+  <style>
+    .step-indicator { display:flex; gap:8px; align-items:center; margin-bottom:1.5rem; }
+    .step-dot { width:8px; height:8px; border-radius:50%; background:var(--border); transition:all 0.3s; }
+    .step-dot.active { background:var(--primary); width:24px; border-radius:4px; }
+    .step-dot.done { background:var(--primary-light); }
+    .signup-step { display:none; }
+    .signup-step.active { display:block; }
+    .blood-type-select { display:grid; grid-template-columns:repeat(4,1fr); gap:8px; }
+    .blood-type-btn { padding:10px; border:1.5px solid var(--border); border-radius:var(--radius-sm); text-align:center; cursor:pointer; font-weight:600; font-size:0.9rem; background:var(--white); transition:all var(--transition); font-family:'Plus Jakarta Sans',sans-serif; }
+    .blood-type-btn.selected { border-color:var(--primary); background:var(--primary-pale); color:var(--primary-dark); }
+    .gender-select { display:flex; gap:10px; }
+    .gender-btn { flex:1; padding:12px; border:1.5px solid var(--border); border-radius:var(--radius); text-align:center; cursor:pointer; font-weight:600; font-size:0.88rem; background:var(--white); transition:all var(--transition); }
+    .gender-btn.selected { border-color:var(--primary); background:var(--primary-pale); color:var(--primary-dark); }
+    .password-toggle { position:relative; }
+    .password-toggle input { padding-right:44px; }
+    .toggle-pw { position:absolute; right:12px; top:50%; transform:translateY(-50%); background:none; border:none; cursor:pointer; color:var(--text-light); font-size:1rem; }
+    .strength-bar { height:4px; border-radius:99px; background:var(--border); margin-top:6px; overflow:hidden; }
+    .strength-fill { height:100%; border-radius:99px; transition:all 0.3s; }
+    .allergy-tags { display:flex; flex-wrap:wrap; gap:6px; margin-top:8px; }
+    .allergy-tag { display:inline-flex; align-items:center; gap:4px; background:var(--info-light); color:#1D4ED8; padding:4px 10px; border-radius:99px; font-size:0.78rem; font-weight:500; }
+    .allergy-tag button { background:none; border:none; cursor:pointer; color:#1D4ED8; font-size:0.9rem; line-height:1; padding:0; }
+    .auth-right::-webkit-scrollbar { width:4px; }
+    .auth-right::-webkit-scrollbar-thumb { background:var(--border); border-radius:99px; }
+    .terms-text { font-size:0.78rem; color:var(--text-light); text-align:center; margin-top:1rem; }
+    .terms-text a { color:var(--primary); }
+    .doctor-login-info { background:var(--info-light); border:1px solid #BFDBFE; border-radius:var(--radius-sm); padding:10px 14px; font-size:0.8rem; color:#1D4ED8; margin-top:1rem; }
+  </style>
+</head>
+<body>
+<div class="auth-page">
+  <!-- Left Panel -->
+  <div class="auth-left">
+    <a href="index.html" style="font-family:'Fraunces',serif;font-size:1.4rem;font-weight:700;color:var(--primary-dark);display:flex;align-items:center;gap:10px;margin-bottom:3rem;">
+      <span style="background:linear-gradient(135deg,var(--primary-light),var(--primary-dark));width:40px;height:40px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:1.2rem;">🏥</span>
+      MedCare
+    </a>
+    <h2>Your health journey starts here.</h2>
+    <p>Access world-class healthcare with intelligent appointment booking, personalised doctor matching, and digital prescription management — all in one place.</p>
+    <div class="auth-features">
+      <div class="auth-feature">
+        <span class="auth-feature-icon">🤖</span>
+        <span class="auth-feature-text">AI-powered symptom analysis & urgency scoring</span>
+      </div>
+      <div class="auth-feature">
+        <span class="auth-feature-icon">📅</span>
+        <span class="auth-feature-text">Real-time slot booking with live availability</span>
+      </div>
+      <div class="auth-feature">
+        <span class="auth-feature-icon">👩‍⚕️</span>
+        <span class="auth-feature-text">Smart doctor matching by speciality & symptoms</span>
+      </div>
+      <div class="auth-feature">
+        <span class="auth-feature-icon">💊</span>
+        <span class="auth-feature-text">Digital prescriptions & medication history</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Right Panel -->
+  <div class="auth-right">
+    <div class="auth-form-container">
+      <div class="auth-tabs">
+        <div class="auth-tab active" id="tab-login" onclick="switchTab('login')">Login</div>
+        <div class="auth-tab" id="tab-signup" onclick="switchTab('signup')">New Patient</div>
+      </div>
+
+      <!-- Error/Success Alert -->
+      <div id="auth-alert" style="display:none;"></div>
+
+      <!-- ==================== LOGIN FORM ==================== -->
+      <div id="login-form">
+        <h3 style="margin-bottom:0.3rem;">Welcome back</h3>
+        <p style="font-size:0.88rem;color:var(--text-light);margin-bottom:1.5rem;">Sign in to your MedCare account</p>
+
+        <div class="form-group">
+          <label class="form-label">Email Address</label>
+          <input type="email" class="form-control" id="login-email" placeholder="your@email.com" autocomplete="email" />
+        </div>
+        <div class="form-group password-toggle">
+          <label class="form-label">Password</label>
+          <input type="password" class="form-control" id="login-password" placeholder="Enter your password" />
+          <button class="toggle-pw" onclick="togglePw('login-password', this)">👁️</button>
+        </div>
+        <div style="text-align:right;margin-bottom:1rem;margin-top:-0.5rem;">
+          <a href="#" style="font-size:0.82rem;color:var(--primary);">Forgot password?</a>
+        </div>
+
+        <button class="btn btn-primary btn-block btn-lg" onclick="handleLogin()">Sign In →</button>
+
+        <div class="doctor-login-info">
+          <strong>Doctor Login:</strong> Use <code>d1@hospital.com</code> through <code>d16@hospital.com</code> with password <code>doctor123</code>
+        </div>
+
+        <div class="terms-text" style="margin-top:1.25rem;">
+          Don't have an account? <a href="#" onclick="switchTab('signup')">Create one →</a>
+        </div>
+      </div>
+
+      <!-- ==================== SIGNUP FORM ==================== -->
+      <div id="signup-form" style="display:none;">
+        <h3 style="margin-bottom:0.3rem;">Create your account</h3>
+        <p style="font-size:0.88rem;color:var(--text-light);margin-bottom:1rem;">Tell us about yourself to get started</p>
+
+        <!-- Step indicator -->
+        <div class="step-indicator" id="step-indicator">
+          <div class="step-dot active" id="dot-1"></div>
+          <div class="step-dot" id="dot-2"></div>
+          <div class="step-dot" id="dot-3"></div>
+          <span style="font-size:0.78rem;color:var(--text-muted);margin-left:4px;" id="step-label">Step 1 of 3 — Account Details</span>
+        </div>
+
+        <!-- STEP 1: Account -->
+        <div class="signup-step active" id="step-1">
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">First Name</label>
+              <input type="text" class="form-control" id="su-firstname" placeholder="Priya" />
+            </div>
+            <div class="form-group">
+              <label class="form-label">Last Name</label>
+              <input type="text" class="form-control" id="su-lastname" placeholder="Sharma" />
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Email Address</label>
+            <input type="email" class="form-control" id="su-email" placeholder="your@email.com" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Phone Number</label>
+            <input type="tel" class="form-control" id="su-phone" placeholder="+91 98765 43210" />
+          </div>
+          <div class="form-group password-toggle">
+            <label class="form-label">Password</label>
+            <input type="password" class="form-control" id="su-password" placeholder="Min 8 characters" oninput="checkStrength(this)" />
+            <button class="toggle-pw" onclick="togglePw('su-password', this)">👁️</button>
+            <div class="strength-bar"><div class="strength-fill" id="strength-fill" style="width:0%;background:var(--danger);"></div></div>
+            <div class="form-hint" id="strength-label">Enter a strong password</div>
+          </div>
+          <button class="btn btn-primary btn-block" onclick="goStep(2)">Continue →</button>
+        </div>
+
+        <!-- STEP 2: Medical Info -->
+        <div class="signup-step" id="step-2">
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Date of Birth</label>
+              <input type="date" class="form-control" id="su-dob" />
+            </div>
+            <div class="form-group">
+              <label class="form-label">Age</label>
+              <input type="number" class="form-control" id="su-age" placeholder="25" min="0" max="120" />
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Gender</label>
+            <div class="gender-select">
+              <div class="gender-btn" onclick="selectGender('male', this)">♂ Male</div>
+              <div class="gender-btn" onclick="selectGender('female', this)">♀ Female</div>
+              <div class="gender-btn" onclick="selectGender('other', this)">⚧ Other</div>
+            </div>
+            <input type="hidden" id="su-gender" />
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Blood Group</label>
+            <div class="blood-type-select">
+              <div class="blood-type-btn" onclick="selectBlood('A+', this)">A+</div>
+              <div class="blood-type-btn" onclick="selectBlood('A-', this)">A−</div>
+              <div class="blood-type-btn" onclick="selectBlood('B+', this)">B+</div>
+              <div class="blood-type-btn" onclick="selectBlood('B-', this)">B−</div>
+              <div class="blood-type-btn" onclick="selectBlood('AB+', this)">AB+</div>
+              <div class="blood-type-btn" onclick="selectBlood('AB-', this)">AB−</div>
+              <div class="blood-type-btn" onclick="selectBlood('O+', this)">O+</div>
+              <div class="blood-type-btn" onclick="selectBlood('O-', this)">O−</div>
+            </div>
+            <input type="hidden" id="su-blood" />
+          </div>
+
+          <div style="display:flex;gap:10px;margin-top:0.5rem;">
+            <button class="btn btn-ghost btn-block" onclick="goStep(1)">← Back</button>
+            <button class="btn btn-primary btn-block" onclick="goStep(3)">Continue →</button>
+          </div>
+        </div>
+
+        <!-- STEP 3: Medical History -->
+        <div class="signup-step" id="step-3">
+          <div class="form-group">
+            <label class="form-label">Address</label>
+            <input type="text" class="form-control" id="su-address" placeholder="123 Main Street, Bangalore" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Emergency Contact Name</label>
+            <input type="text" class="form-control" id="su-emergency-name" placeholder="Family member name" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Emergency Contact Phone</label>
+            <input type="tel" class="form-control" id="su-emergency-phone" placeholder="+91 98765 00000" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Known Allergies <span style="color:var(--text-muted);font-weight:400;">(optional)</span></label>
+            <div style="display:flex;gap:8px;">
+              <input type="text" class="form-control" id="allergy-input" placeholder="e.g. Penicillin, Sulfa..." onkeydown="if(event.key==='Enter'){addAllergy();}" />
+              <button class="btn btn-outline btn-sm" onclick="addAllergy()">Add</button>
+            </div>
+            <div class="allergy-tags" id="allergy-tags"></div>
+            <input type="hidden" id="su-allergies" value="[]" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Pre-existing Conditions <span style="color:var(--text-muted);font-weight:400;">(optional)</span></label>
+            <textarea class="form-control" id="su-conditions" placeholder="e.g. Diabetes Type 2, Hypertension..." style="min-height:70px;"></textarea>
+          </div>
+
+          <div style="display:flex;gap:10px;margin-top:0.5rem;">
+            <button class="btn btn-ghost btn-block" onclick="goStep(2)">← Back</button>
+            <button class="btn btn-primary btn-block" onclick="handleSignup()">Create Account ✓</button>
+          </div>
+        </div>
+
+        <div class="terms-text">
+          Already have an account? <a href="#" onclick="switchTab('login')">Sign in →</a>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script src="js/app.js"></script>
+<script>
+let currentStep = 1;
+let selectedGender = '';
+let selectedBlood = '';
+let allergies = [];
+
+// Check URL for tab preference
+document.addEventListener('DOMContentLoaded', () => {
+  if (getCurrentUser()) window.location.href = 'dashboard.html';
+  const params = new URLSearchParams(window.location.search);
+  if (params.get('tab') === 'signup') switchTab('signup');
+});
+
+function switchTab(tab) {
+  const isLogin = tab === 'login';
+  document.getElementById('tab-login').classList.toggle('active', isLogin);
+  document.getElementById('tab-signup').classList.toggle('active', !isLogin);
+  document.getElementById('login-form').style.display = isLogin ? 'block' : 'none';
+  document.getElementById('signup-form').style.display = isLogin ? 'none' : 'block';
+  document.getElementById('auth-alert').style.display = 'none';
+}
+
+function showAlert(msg, type='error') {
+  const el = document.getElementById('auth-alert');
+  el.className = `alert alert-${type}`;
+  el.innerHTML = `<span>${type==='error'?'❌':type==='success'?'✅':'ℹ️'}</span><span>${msg}</span>`;
+  el.style.display = 'flex';
+}
+
+function togglePw(id, btn) {
+  const input = document.getElementById(id);
+  if (input.type === 'password') { input.type = 'text'; btn.textContent = '🙈'; }
+  else { input.type = 'password'; btn.textContent = '👁️'; }
+}
+
+function checkStrength(input) {
+  const val = input.value;
+  let score = 0;
+  if (val.length >= 8) score++;
+  if (/[A-Z]/.test(val)) score++;
+  if (/[0-9]/.test(val)) score++;
+  if (/[^A-Za-z0-9]/.test(val)) score++;
+  const colors = ['', '#EF4444', '#F59E0B', '#22C55E', '#15803D'];
+  const labels = ['', 'Weak', 'Fair', 'Good', 'Strong'];
+  const fill = document.getElementById('strength-fill');
+  fill.style.width = (score * 25) + '%';
+  fill.style.background = colors[score];
+  document.getElementById('strength-label').textContent = labels[score] || 'Enter a password';
+}
+
+function goStep(n) {
+  if (n > currentStep) {
+    if (!validateStep(currentStep)) return;
+  }
+  document.getElementById(`step-${currentStep}`).classList.remove('active');
+  currentStep = n;
+  document.getElementById(`step-${currentStep}`).classList.add('active');
+  // Update dots
+  for (let i = 1; i <= 3; i++) {
+    const dot = document.getElementById(`dot-${i}`);
+    dot.classList.remove('active', 'done');
+    if (i < currentStep) dot.classList.add('done');
+    else if (i === currentStep) dot.classList.add('active');
+  }
+  const labels = ['Step 1 of 3 — Account Details', 'Step 2 of 3 — Personal Info', 'Step 3 of 3 — Medical History'];
+  document.getElementById('step-label').textContent = labels[currentStep - 1];
+  document.getElementById('auth-alert').style.display = 'none';
+}
+
+function validateStep(step) {
+  if (step === 1) {
+    const fn = document.getElementById('su-firstname').value.trim();
+    const ln = document.getElementById('su-lastname').value.trim();
+    const em = document.getElementById('su-email').value.trim();
+    const pw = document.getElementById('su-password').value;
+    if (!fn || !ln) return showAlert('Please enter your full name.'), false;
+    if (!em || !/\S+@\S+\.\S+/.test(em)) return showAlert('Please enter a valid email.'), false;
+    if (pw.length < 8) return showAlert('Password must be at least 8 characters.'), false;
+    return true;
+  }
+  if (step === 2) {
+    if (!selectedGender) return showAlert('Please select your gender.'), false;
+    if (!selectedBlood) return showAlert('Please select your blood group.'), false;
+    return true;
+  }
+  return true;
+}
+
+function selectGender(val, el) {
+  document.querySelectorAll('.gender-btn').forEach(b => b.classList.remove('selected'));
+  el.classList.add('selected');
+  selectedGender = val;
+  document.getElementById('su-gender').value = val;
+}
+function selectBlood(val, el) {
+  document.querySelectorAll('.blood-type-btn').forEach(b => b.classList.remove('selected'));
+  el.classList.add('selected');
+  selectedBlood = val;
+  document.getElementById('su-blood').value = val;
+}
+
+function addAllergy() {
+  const input = document.getElementById('allergy-input');
+  const val = input.value.trim();
+  if (!val || allergies.includes(val)) return;
+  allergies.push(val);
+  renderAllergyTags();
+  input.value = '';
+}
+function removeAllergy(val) {
+  allergies = allergies.filter(a => a !== val);
+  renderAllergyTags();
+}
+function renderAllergyTags() {
+  const container = document.getElementById('allergy-tags');
+  container.innerHTML = allergies.map(a =>
+    `<div class="allergy-tag">${a}<button onclick="removeAllergy('${a}')">✕</button></div>`
+  ).join('');
+  document.getElementById('su-allergies').value = JSON.stringify(allergies);
+}
+
+function handleLogin() {
+  const email = document.getElementById('login-email').value.trim();
+  const password = document.getElementById('login-password').value;
+  if (!email || !password) return showAlert('Please fill in all fields.');
+
+  const result = loginUser(email, password);
+  if (result.error) return showAlert(result.error);
+
+  setCurrentUser(result.user);
+  showAlert('Login successful! Redirecting...', 'success');
+
+  setTimeout(() => {
+    if (result.user.role === 'doctor') window.location.href = 'doctor-dashboard.html';
+    else window.location.href = 'dashboard.html';
+  }, 800);
+}
+
+function handleSignup() {
+  if (!validateStep(3)) return;
+
+  const fn = document.getElementById('su-firstname').value.trim();
+  const ln = document.getElementById('su-lastname').value.trim();
+  const dob = document.getElementById('su-dob').value;
+  const age = document.getElementById('su-age').value;
+  if (!age && !dob) return showAlert('Please enter your age or date of birth.');
+
+  const data = {
+    name: `${fn} ${ln}`,
+    email: document.getElementById('su-email').value.trim(),
+    phone: document.getElementById('su-phone').value.trim(),
+    password: document.getElementById('su-password').value,
+    dob: dob,
+    age: age || (dob ? Math.floor((Date.now() - new Date(dob)) / 31557600000) : ''),
+    gender: selectedGender,
+    bloodGroup: selectedBlood,
+    address: document.getElementById('su-address').value.trim(),
+    emergencyContactName: document.getElementById('su-emergency-name').value.trim(),
+    emergencyContactPhone: document.getElementById('su-emergency-phone').value.trim(),
+    allergies: JSON.parse(document.getElementById('su-allergies').value || '[]'),
+    conditions: document.getElementById('su-conditions').value.trim(),
+  };
+
+  const result = registerPatient(data);
+  if (result.error) return showAlert(result.error);
+
+  setCurrentUser(result.patient);
+  seedDemoPrescriptions(result.patient.id);
+  showAlert('Account created! Welcome to MedCare 🎉', 'success');
+  setTimeout(() => window.location.href = 'dashboard.html', 1000);
+}
+</script>
+</body>
+</html>
