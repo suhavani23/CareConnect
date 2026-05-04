@@ -1,52 +1,72 @@
 import React from 'react';
-import { Sparkles, Award, Clock } from 'lucide-react';
+import { Sparkles, Award, Clock, ChevronRight, CheckCircle2 } from 'lucide-react';
+import { motion } from 'framer-motion';
 
 const RecommendationView = ({ suggestedDoc, onAccept, onDecline, onGoBack }) => {
-  // Find the first available slot, ignoring 'IMMEDIATE' for the "Next slot" display if we want to show a time
-  const nextSlot = suggestedDoc.availableSlots.find(s => s !== 'IMMEDIATE') || 'As soon as possible';
+  const nextSlot = suggestedDoc.availableSlots.find(s => s !== 'IMMEDIATE') || 'Immediate Attention';
 
   return (
-    <div className="max-w-lg mx-auto bg-white border-2 border-blue-500 rounded-2xl p-8 shadow-xl">
-      <div className="text-center mb-6">
-        <div className="bg-blue-100 text-blue-700 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
-          <Sparkles size={32} />
+    <motion.div 
+      initial={{ opacity: 0, scale: 0.95 }}
+      animate={{ opacity: 1, scale: 1 }}
+      className="max-w-lg mx-auto bg-white rounded-[2.5rem] p-10 shadow-2xl border border-blue-50 relative overflow-hidden"
+    >
+      <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-blue-600 to-indigo-600" />
+      
+      <div className="text-center mb-8">
+        <div className="bg-blue-50 text-blue-600 w-20 h-20 rounded-3xl flex items-center justify-center mx-auto mb-6 shadow-xl shadow-blue-50 rotate-3">
+          <Sparkles size={40} />
         </div>
-        <h2 className="text-2xl font-bold text-slate-800">AI Recommendation</h2>
-        <p className="text-slate-500 mt-2">
-          Based on your symptoms and urgency level, we suggest:
+        <p className="text-[10px] font-black text-blue-600 uppercase tracking-widest mb-1">Matchmaker Optimized</p>
+        <h2 className="text-3xl font-black text-slate-900 tracking-tight">Best Clinical Match</h2>
+        <p className="text-slate-500 mt-2 text-sm font-medium">
+          Our AI has identified the optimal specialist for your reported pathology.
         </p>
       </div>
 
-      <div className="bg-slate-50 rounded-xl p-5 mb-8 border border-slate-200">
-        <h3 className="text-lg font-bold text-slate-900">{suggestedDoc.name}</h3>
-        <p className="text-blue-600 font-semibold">{suggestedDoc.specialization}</p>
-        <div className="flex gap-4 mt-3 text-sm text-slate-600">
-          <span className="flex items-center"><Award size={16} className="mr-1"/> {suggestedDoc.experience} yrs exp</span>
-          <span className="flex items-center"><Clock size={16} className="mr-1"/> Next slot: {nextSlot}</span>
+      <div className="bg-slate-50 rounded-[2rem] p-8 mb-10 border border-slate-100 relative group overflow-hidden">
+        <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
+           <Award size={80} />
+        </div>
+        
+        <h3 className="text-2xl font-black text-slate-900 leading-tight">{suggestedDoc.name}</h3>
+        <p className="text-blue-600 font-bold uppercase tracking-widest text-xs mt-1">{suggestedDoc.specialization}</p>
+        
+        <div className="flex flex-col gap-3 mt-6">
+          <div className="flex items-center gap-3 bg-white p-3 rounded-xl border border-slate-100 shadow-sm">
+            <Award size={18} className="text-indigo-500" />
+            <span className="text-sm font-bold text-slate-700">{suggestedDoc.experience} Years Professional Experience</span>
+          </div>
+          <div className="flex items-center gap-3 bg-white p-3 rounded-xl border border-slate-100 shadow-sm">
+            <Clock size={18} className="text-emerald-500" />
+            <span className="text-sm font-bold text-slate-700">Available: {nextSlot}</span>
+          </div>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 gap-3">
+      <div className="space-y-4">
         <button 
           onClick={onAccept}
-          className="w-full bg-blue-600 text-white py-4 rounded-xl font-bold hover:bg-blue-700 transition shadow-lg shadow-blue-200"
+          className="w-full bg-slate-900 text-white py-5 rounded-2xl font-black shadow-xl shadow-slate-200 hover:bg-black transition-all transform hover:scale-[1.02] active:scale-95 flex items-center justify-center gap-3"
         >
-          Book with {suggestedDoc.name}
+          Confirm Recommendation <ChevronRight size={20} />
         </button>
+        
         <button 
           onClick={onDecline}
-          className="w-full bg-white text-slate-600 py-3 rounded-xl font-medium border border-slate-200 hover:bg-slate-50"
+          className="w-full bg-white text-slate-400 py-3 rounded-xl font-bold text-xs uppercase tracking-widest border border-transparent hover:text-slate-600 transition-colors"
         >
-          No, I want to choose someone else
+          Browse Staff Manually
         </button>
+
         <button 
           onClick={onGoBack}
-          className="text-slate-400 text-sm hover:underline mt-2 text-center"
+          className="w-full text-slate-300 text-[10px] font-black uppercase tracking-widest hover:text-blue-600 transition-colors"
         >
-          Go back to edit symptoms
+          Edit Symptom Map
         </button>
       </div>
-    </div>
+    </motion.div>
   );
 };
 
