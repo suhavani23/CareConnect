@@ -1,17 +1,28 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { CalendarPlus, Pill, Clock, ChevronRight, Activity } from 'lucide-react';
+import { CalendarPlus, Pill, Clock, ChevronRight, Activity, X } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
-import { getBookedAppointments } from '../services/mockDatabase';
+import { getBookedAppointments, removeBookedAppointment } from '../services/mockDatabase';
 
 const PatientDashboard = () => {
   const { logout } = useAuth();
   const navigate = useNavigate();
-  const bookings = getBookedAppointments();
+  const [bookings, setBookings] = useState([]);
+
+  useEffect(() => {
+    setBookings(getBookedAppointments());
+  }, []);
 
   const handleLogout = () => {
     logout();
     navigate('/');
+  };
+
+  const handleCancelAppointment = (id) => {
+    if (window.confirm('Are you sure you want to cancel this appointment?')) {
+      removeBookedAppointment(id);
+      setBookings(getBookedAppointments());
+    }
   };
 
   return (
@@ -84,8 +95,8 @@ const PatientDashboard = () => {
             </div>
           ) : (
             <div className="grid grid-cols-1 gap-4">
-              {bookings.map((appt, i) => (
-                 <div key={i} className="bg-white border border-slate-200 rounded-xl p-5 flex justify-between items-center shadow-sm">
+              {bookings.map((appt) => (
+                 <div key={appt.id} className="bg-white border border-slate-200 rounded-xl p-5 flex justify-between items-center shadow-sm hover:shadow-md transition-shadow">
                    <div className="flex items-center">
                      <div className="w-10 h-10 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center mr-4">
                        <Activity size={20} />
@@ -95,9 +106,18 @@ const PatientDashboard = () => {
                        <p className="text-sm text-slate-500">{appt.doctor.specialization}</p>
                      </div>
                    </div>
-                   <div className="text-right">
-                     <p className="font-bold text-blue-600">{appt.slotTime}</p>
-                     <p className="text-xs text-slate-500">Upcoming</p>
+                   <div className="flex items-center space-x-6">
+                     <div className="text-right">
+                       <p className="font-bold text-blue-600">{appt.slotTime}</p>
+                       <p className="text-xs text-slate-500">Upcoming</p>
+                     </div>
+                     <button 
+                       onClick={() => handleCancelAppointment(appt.id)}
+                       className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors group"
+                       title="Cancel Appointment"
+                     >
+                       <X size={20} />
+                     </button>
                    </div>
                  </div>
               ))}

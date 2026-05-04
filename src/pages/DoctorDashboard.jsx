@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Clock, Activity, AlertTriangle, FileText, ChevronLeft } from 'lucide-react';
-import { getBookedAppointments } from '../services/mockDatabase';
+import { Clock, Activity, AlertTriangle, FileText, ChevronLeft, Trash2 } from 'lucide-react';
+import { getBookedAppointments, removeBookedAppointment } from '../services/mockDatabase';
 
 const DoctorDashboard = () => {
   const [appointments, setAppointments] = useState([]);
@@ -11,6 +11,13 @@ const DoctorDashboard = () => {
     const bookings = getBookedAppointments();
     setAppointments([...bookings].reverse()); // Newest first
   }, []);
+
+  const handleCancelAppointment = (id) => {
+    if (window.confirm('Are you sure you want to cancel this appointment?')) {
+      removeBookedAppointment(id);
+      setAppointments(getBookedAppointments().reverse());
+    }
+  };
 
   return (
     <div className="min-h-screen bg-slate-50 font-sans p-6 md:p-12 relative">
@@ -44,8 +51,8 @@ const DoctorDashboard = () => {
           </div>
         ) : (
           <div className="grid grid-cols-1 gap-6">
-            {appointments.map((appt, i) => (
-              <div key={i} className="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden flex flex-col md:flex-row">
+            {appointments.map((appt) => (
+              <div key={appt.id} className="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden flex flex-col md:flex-row relative group">
                 {/* Time & Doctor block */}
                 <div className="bg-slate-50 border-r border-slate-100 p-6 md:w-64 flex flex-col justify-center">
                   <span className="inline-block px-3 py-1 bg-blue-100 text-blue-700 font-bold rounded-full text-sm mb-4 w-max">
@@ -62,11 +69,20 @@ const DoctorDashboard = () => {
                      <h3 className="text-xl font-bold text-slate-900 flex items-center">
                        <FileText size={20} className="mr-2 text-slate-400"/> Clinical Brief
                      </h3>
-                     {appt.urgencyScore >= 7 && (
-                       <span className="flex items-center text-red-600 bg-red-50 px-3 py-1 rounded-full text-sm font-bold border border-red-100">
-                         <AlertTriangle size={16} className="mr-1" /> High Urgency
-                       </span>
-                     )}
+                     <div className="flex items-center space-x-3">
+                       {appt.urgencyScore >= 7 && (
+                         <span className="flex items-center text-red-600 bg-red-50 px-3 py-1 rounded-full text-sm font-bold border border-red-100">
+                           <AlertTriangle size={16} className="mr-1" /> High Urgency
+                         </span>
+                       )}
+                       <button 
+                         onClick={() => handleCancelAppointment(appt.id)}
+                         className="p-2 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all"
+                         title="Cancel Appointment"
+                       >
+                         <Trash2 size={18} />
+                       </button>
+                     </div>
                   </div>
 
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 mb-6">

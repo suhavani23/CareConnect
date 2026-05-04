@@ -51,6 +51,15 @@ export const getBookedAppointments = () => {
 
 export const addBookedAppointment = (appt) => {
   const bookings = getBookedAppointments();
-  bookings.push(appt);
+  bookings.push({
+    ...appt,
+    id: appt.id || Date.now().toString() + Math.random().toString(36).substr(2, 9)
+  });
   localStorage.setItem('careconnect_bookings', JSON.stringify(bookings));
+};
+
+export const removeBookedAppointment = (apptId) => {
+  const bookings = getBookedAppointments();
+  const filtered = bookings.filter(appt => appt.id !== apptId);
+  localStorage.setItem('careconnect_bookings', JSON.stringify(filtered));
 };
