@@ -2,6 +2,9 @@
 
 CareConnect is a high-fidelity, AI-driven medical clinical management system designed to bridge the gap between patient intake and professional clinical treatment. It intelligently routes patients through a triage engine and provides doctors with a live "Clinical Pipeline" to manage sessions, prescriptions, and session lifecycles.
 
+**🌐 Live Demo:** [careconnect-sigma-plum.vercel.app](https://careconnect-sigma-plum.vercel.app)
+
+
 ## 🚀 Key Features
 
 ### 🩺 Full Clinical Lifecycle Management
