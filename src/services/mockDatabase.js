@@ -1,14 +1,14 @@
 export const hospitalStaff = [
   {
-    id: "dr-jenkins",
-    name: "Dr. Sarah Jenkins",
+    id: "dr-sharma",
+    name: "Dr. Priya Sharma",
     specialization: "General Physician",
     experience: 12,
     availableSlots: ["09:00 AM", "11:00 AM"]
   },
   {
-    id: "dr-miller",
-    name: "Dr. Robert Miller",
+    id: "dr-desai",
+    name: "Dr. Rahul Desai",
     specialization: "Neurologist",
     experience: 8,
     availableSlots: ["10:00 AM", "01:00 PM", "03:00 PM"]
@@ -21,22 +21,22 @@ export const hospitalStaff = [
     availableSlots: ["02:00 PM"]
   },
   {
-    id: "dr-smith",
-    name: "Dr. James Smith",
+    id: "dr-singh",
+    name: "Dr. Vikram Singh",
     specialization: "Cardiologist",
     experience: 15,
     availableSlots: ["09:00 AM", "12:00 PM"]
   },
   {
-    id: "dr-lee",
-    name: "Dr. Michelle Lee",
+    id: "dr-gupta",
+    name: "Dr. Neha Gupta",
     specialization: "General Physician",
     experience: 5,
     availableSlots: [] // Fully booked
   },
   {
     id: "dr-emergency",
-    name: "On-call Emergency Generalist",
+    name: "Dr. Amit Kumar (Emergency On-call)",
     specialization: "Emergency Medicine",
     experience: 18,
     availableSlots: ["10:00 AM", "02:00 PM", "03:00 PM", "IMMEDIATE"]
