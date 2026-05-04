@@ -1,49 +1,54 @@
 # CareConnect 🏥
 
-CareConnect is a modern, AI-driven medical booking portal designed to streamline patient intake and intelligently route patients to appropriate specialists based on symptoms and urgency. Built with a focus on trust, aesthetic design, and an intuitive user experience, CareConnect seamlessly bridges the gap between patients and healthcare professionals.
+CareConnect is a high-fidelity, AI-driven medical clinical management system designed to bridge the gap between patient intake and professional clinical treatment. It intelligently routes patients through a triage engine and provides doctors with a live "Clinical Pipeline" to manage sessions, prescriptions, and session lifecycles.
 
-## 🚀 Features
+## 🚀 Key Features
 
-### 🔐 Secure Patient Portal
-- **Authentication:** Dedicated Login and Registration flows mimicking a secure hospital portal.
-- **Patient Dashboard:** Personalized post-login dashboard showcasing recent activity and quick actions for "Book Session" and "Medications".
-- **State Protection:** Fully protected routing architecture ensuring unauthorized users cannot access the medical shell.
+### 🩺 Full Clinical Lifecycle Management
+- **Intelligent Doctor Portal:** Profile-based authentication for medical staff using a secure passkey system.
+- **Session Pipeline:** Live tracking of patient states: **WAITING → IN_PROGRESS → COMPLETED**.
+- **Clinical Prescriptions:** Doctors can generate structured digital prescriptions (Diagnosis, Medications, Advice) that sync instantly with the patient's dashboard.
+- **Hybrid Sync Engine:** Advanced data architecture combining **Supabase** for persistence with a **LocalStorage Fallback Layer** for schema resilience and offline-mode simulation.
 
-### 🤖 Smart AI Matchmaker & Triage
-- **Interactive Intake Shell:** A multi-step symptom assessment form featuring sliding pain scales and specific anatomical targeting.
-- **Silent Priority System:** AI dynamically calculates a hidden "Urgency Score" (1-10) based on symptom severity. High scores ($\ge 7$) trigger an immediate Emergency Override without causing patient panic by showing raw numbers.
-- **Specialist Routing:** Analyzes symptoms and intelligently matches patients to relevant departments (e.g., Cardiology, Neurology) and specific specialists based on availability and years of experience.
+### 🤖 Smart AI Triage & Severity ($S$) Score
+- **Multi-Step Intake:** Precise anatomical targeting and symptom mapping using a professional medical UI.
+- **Clinical Severity ($S$):** AI calculates a hidden severity score from 1-100.
+  - **$S \ge 70$**: Marked as **Urgent** in the clinical pipeline.
+  - **$S \ge 80$**: Triggers **Emergency Forced Override**, redirecting patients to immediate care.
+- **Silent Priority:** Ensures high-risk patients are prioritized in the doctor's queue without causing patient anxiety through raw numbers.
 
-### 📅 Advanced Booking Dashboard
-- **Real-Time Slot Management:** Intuitive booking interface with "Available" (Green) and "Booked" (Red) slot states.
-- **Immediate Attention Override:** Emergency patients are provided a unique "REQUEST IMMEDIATE ATTENTION" booking slot.
-- **Patient Agency:** Users can accept the AI's recommendation or explicitly choose their preferred doctor.
+### 📅 Advanced Open Booking
+- **Multi-Day Scheduling:** Choose between Today, Tomorrow, and the Day After with uniquely keyed slot availability.
+- **Staff Directory:** Browse the entire hospital board with specialization filters and AI-match badges for recommended doctors.
+- **Optimistic UI:** Instant visual feedback for session starts and bookings, ensuring a snappy, premium application feel.
 
-### 🩺 Dedicated Doctor View
-- **Mock Real-Time Sync:** Leveraging `localStorage` to simulate real-time database synchronization. When a patient books a slot, it instantly appears on the doctor's dashboard.
-- **Clinical Briefs:** Doctors receive pre-checkup reports containing the patient's age, gender, raw symptoms, and the AI's calculated Urgency Report.
+### 🏢 Expanded Medical Board
+- **7+ Specialized Departments:** Including Cardiology, Neurology, Orthopedics, Pediatrics, Dermatology, and General Medicine.
+- **Facility Grid:** Highlights 24/7 Emergency Care, AI Triage, Telehealth Support, and Advanced Diagnostics.
 
 ## 💻 Tech Stack
 
-- **Frontend Framework:** [React](https://reactjs.org/)
-- **Routing:** [React Router v6](https://reactrouter.com/) (Client-side routing with `ProtectedRoute` implementation)
-- **Styling:** [Tailwind CSS v4](https://tailwindcss.com/) (Utility-first styling tailored with a professional "Trust Blue" `#2d6aee` aesthetic)
-- **Animations:** [Framer Motion](https://www.framer.com/motion/) (Smooth "booking corridor" slide transitions)
-- **Icons:** [Lucide React](https://lucide.dev/)
-- **Build Tool:** [Vite](https://vitejs.dev/)
+- **Frontend:** React + Vite
+- **Database:** Supabase (PostgreSQL)
+- **State Management:** React Context API (Auth & Clinical Profile)
+- **Styling:** Tailwind CSS + Vanilla CSS (Premium "Trust Blue" Aesthetic)
+- **Animations:** Framer Motion (Optimistic transitions and smooth "Booking Corridor" flow)
+- **Icons:** Lucide React
 
-## 🛠️ Running Locally
+## 🛠️ Database Setup
 
-1. Clone the repository
-2. Install dependencies:
-   ```bash
-   npm install
-   ```
-3. Start the development server:
-   ```bash
-   npm run dev
-   ```
-4. Access the portal at `http://localhost:5173/`
+To enable the full clinical upgrade, run the following SQL in your Supabase Editor:
+
+```sql
+ALTER TABLE bookings 
+ADD COLUMN IF NOT EXISTS status TEXT DEFAULT 'WAITING',
+ADD COLUMN IF NOT EXISTS severity_score INT8,
+ADD COLUMN IF NOT EXISTS ai_triage_summary TEXT,
+ADD COLUMN IF NOT EXISTS priority_level TEXT DEFAULT 'Routine',
+ADD COLUMN IF NOT EXISTS affected_area TEXT;
+
+ALTER TABLE bookings DISABLE ROW LEVEL SECURITY;
+```
 
 ---
-*Designed to emulate professional medical portals like Practo, built with state-of-the-art frontend technologies.*
+*Developed as a state-of-the-art clinical management demonstration, emulating professional platforms like Practo and Apollo Health.*
