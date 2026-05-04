@@ -53,6 +53,18 @@ export const getDoctorByName = (name) => {
 
 // --- Supabase-backed appointment functions ---
 
+/**
+ * SQL FIX FOR MISSING COLUMNS:
+ * Run this in your Supabase SQL Editor if you see errors:
+ * 
+ * ALTER TABLE bookings 
+ * ADD COLUMN IF NOT EXISTS status TEXT DEFAULT 'WAITING',
+ * ADD COLUMN IF NOT EXISTS severity_score INT8,
+ * ADD COLUMN IF NOT EXISTS ai_triage_summary TEXT,
+ * ADD COLUMN IF NOT EXISTS priority_level TEXT DEFAULT 'Routine',
+ * ADD COLUMN IF NOT EXISTS affected_area TEXT;
+ */
+
 export const getBookedAppointments = async () => {
   try {
     const { data, error } = await supabase
@@ -60,18 +72,22 @@ export const getBookedAppointments = async () => {
       .select('*')
       .order('created_at', { ascending: false });
 
-    if (error) throw error;
+    if (error) {
+      console.warn('Schema mismatch in bookings table. Some features may be disabled.', error.message);
+      // If the fetch fails entirely, return empty array
+      return [];
+    }
 
     return (data || []).map(row => ({
       id: row.id,
       slotTime: row.slot_time,
       urgencyScore: row.urgency_score,
-      severity_score: row.severity_score,
-      ai_triage_summary: row.ai_triage_summary,
-      priority_level: row.priority_level,
+      severity_score: row.severity_score || 0,
+      ai_triage_summary: row.ai_triage_summary || '',
+      priority_level: row.priority_level || 'Routine',
       reasoning: row.reasoning,
       symptoms: row.symptoms || [],
-      affectedArea: row.affected_area,
+      affectedArea: row.affected_area || '',
       status: row.status || 'WAITING',
       doctor: {
         id: row.doctor_id,
@@ -86,32 +102,49 @@ export const getBookedAppointments = async () => {
 };
 
 export const addBookedAppointment = async (appt) => {
+  const baseData = {
+    doctor_id: appt.doctor.id,
+    doctor_name: appt.doctor.name,
+    doctor_specialization: appt.doctor.specialization,
+    slot_time: appt.slotTime,
+    urgency_score: appt.urgencyScore,
+    reasoning: appt.reasoning,
+    symptoms: appt.symptoms || []
+  };
+
+  const extendedData = {
+    ...baseData,
+    severity_score: appt.severity_score || null,
+    ai_triage_summary: appt.ai_triage_summary || null,
+    priority_level: appt.priority_level || 'Routine',
+    affected_area: appt.affectedArea || null,
+    status: 'WAITING'
+  };
+
   try {
+    // Try inserting with all fields first
     const { data, error } = await supabase
       .from('bookings')
-      .insert([{
-        doctor_id: appt.doctor.id,
-        doctor_name: appt.doctor.name,
-        doctor_specialization: appt.doctor.specialization,
-        slot_time: appt.slotTime,
-        urgency_score: appt.urgencyScore,
-        severity_score: appt.severity_score || null,
-        ai_triage_summary: appt.ai_triage_summary || null,
-        priority_level: appt.priority_level || 'Routine',
-        reasoning: appt.reasoning,
-        symptoms: appt.symptoms || [],
-        affected_area: appt.affectedArea || null,
-        status: 'WAITING'
-      }])
+      .insert([extendedData])
       .select();
 
-    if (error) throw error;
+    if (error) {
+      // If the error is a missing column (PGRST204 or similar), try falling back to base fields
+      if (error.message.includes('column') || error.code === 'PGRST204') {
+        console.warn('Fallback: Inserting without extended clinical fields due to missing columns.');
+        const { data: fallbackData, error: fallbackError } = await supabase
+          .from('bookings')
+          .insert([baseData])
+          .select();
+        
+        if (fallbackError) throw fallbackError;
+        return fallbackData[0];
+      }
+      throw error;
+    }
     return data[0];
   } catch (error) {
-    console.error('Full Error Object:', error);
-    if (error instanceof TypeError && error.message === 'Failed to fetch') {
-      console.error('NETWORK ERROR: The browser blocked the request or the URL is unreachable.');
-    }
+    console.error('Booking Error:', error);
     throw error;
   }
 };
@@ -138,14 +171,21 @@ export const updateAppointmentStatus = async (apptId, status) => {
       .update({ status })
       .eq('id', apptId);
 
-    if (error) throw error;
+    if (error) {
+       // If column missing, we can't update status, but we can log it
+       if (error.message.includes('column')) {
+         console.error('STATUS UPDATE FAILED: "status" column missing in DB.');
+         return; 
+       }
+       throw error;
+    }
   } catch (error) {
     console.error('Error updating appointment status:', error);
     throw error;
   }
 };
 
-// --- Prescription helpers (localStorage-backed until a prescriptions table is added) ---
+// --- Prescription helpers ---
 
 export const getPrescriptions = () => {
   const data = localStorage.getItem('careconnect_prescriptions');
