@@ -1,6 +1,38 @@
 import { hospitalStaff } from './mockDatabase';
 
 export const simulateCareConnectMatchmaker = ({ patientSymptoms, bodyRegions = [], urgencyScore, preferredDoctorID }) => {
+  // --- Severity & Triage Calculation Engine ---
+  // The Severity Score (S) is calculated from 1 to 100 based on symptoms, regions, and pain level.
+  let severityScore = urgencyScore * 10; // Base score from pain level (1-10 -> 10-100)
+  
+  const symptomsStr = patientSymptoms.join(" ").toLowerCase();
+  const regionsSet = new Set(bodyRegions);
+
+  // Critical Overrides (Emergency Thresholds)
+  if (symptomsStr.includes("chest pain") || symptomsStr.includes("breathless") || symptomsStr.includes("unconscious")) {
+    severityScore = Math.max(severityScore, 90);
+  }
+  if (regionsSet.has("Chest") && urgencyScore >= 8) {
+    severityScore = Math.max(severityScore, 95);
+  }
+  if (regionsSet.has("Head") && urgencyScore >= 9) {
+    severityScore = Math.max(severityScore, 85);
+  }
+
+  // Triage Summary Logic
+  let aiSummary = `Patient reports ${patientSymptoms.join(', ') || 'discomfort'} in the ${Array.from(regionsSet).join('/') || 'General'} area. Pain level is ${urgencyScore}/10.`;
+  if (severityScore >= 80) {
+    aiSummary += " EMERGENCY: Immediate intervention required. High risk of clinical deterioration.";
+  } else if (severityScore >= 70) {
+    aiSummary += " URGENT: Requires prioritization in clinical pipeline. Monitor vitals.";
+  } else {
+    aiSummary += " ROUTINE: Standard consultation sufficient.";
+  }
+
+  const priorityLevel = severityScore >= 80 ? 'Emergency' : (severityScore >= 70 ? 'Urgent' : 'Routine');
+
+  // --- Matching Logic ---
+
   // Task Logic 1: Check Preference
   if (preferredDoctorID && preferredDoctorID !== "none") {
     const preferredDoctor = hospitalStaff.find(doc => doc.id === preferredDoctorID);
@@ -9,34 +41,36 @@ export const simulateCareConnectMatchmaker = ({ patientSymptoms, bodyRegions = [
         matchType: "preferred",
         reasoning: "Your preferred doctor is available.",
         doctorProfile: preferredDoctor,
-        requiredSpecialization: preferredDoctor.specialization
+        requiredSpecialization: preferredDoctor.specialization,
+        severity_score: severityScore,
+        ai_triage_summary: aiSummary,
+        priority_level: priorityLevel
       };
     }
   }
 
   // Task Logic 2: Handle Unavailability/No Preference
   
-  // High Urgency Override
-  if (urgencyScore >= 7) {
-    // Attempt to find a senior doctor (10+ yrs exp) with slots, or default to Emergency Generalist
+  // High Urgency Override (Force to Emergency if S >= 80)
+  if (severityScore >= 80) {
     const emergencyDoc = hospitalStaff.find(doc => doc.id === "dr-emergency");
     return {
       matchType: "emergency",
-      reasoning: `Based on your symptoms, we have prioritized your booking with an available emergency physician or senior specialist.`,
+      reasoning: `Based on your critical symptoms (S:${severityScore}), we have prioritized your booking with an available emergency physician.`,
       doctorProfile: emergencyDoc,
-      requiredSpecialization: emergencyDoc.specialization
+      requiredSpecialization: emergencyDoc.specialization,
+      severity_score: severityScore,
+      ai_triage_summary: aiSummary,
+      priority_level: 'Emergency'
     };
   }
 
-  // Analyze symptoms to determine specialization (Simulated)
+  // Analyze symptoms to determine specialization
   let requiredSpecialization = "General Physician";
-  const symptomsStr = patientSymptoms.join(" ").toLowerCase();
   
-  const regionsObj = new Set(bodyRegions);
-  
-  if (symptomsStr.includes("headache") || symptomsStr.includes("migraine") || symptomsStr.includes("dizzy") || regionsObj.has("Head")) {
+  if (symptomsStr.includes("headache") || symptomsStr.includes("migraine") || symptomsStr.includes("dizzy") || regionsSet.has("Head")) {
     requiredSpecialization = "Neurologist";
-  } else if (symptomsStr.includes("chest") || symptomsStr.includes("heart") || symptomsStr.includes("palpitation") || regionsObj.has("Chest")) {
+  } else if (symptomsStr.includes("chest") || symptomsStr.includes("heart") || symptomsStr.includes("palpitation") || regionsSet.has("Chest")) {
     requiredSpecialization = "Cardiologist";
   }
 
@@ -66,15 +100,22 @@ export const simulateCareConnectMatchmaker = ({ patientSymptoms, bodyRegions = [
       matchType: "suggested",
       reasoning: reason,
       doctorProfile: selectedDoctor,
-      requiredSpecialization: requiredSpecialization
+      requiredSpecialization: requiredSpecialization,
+      severity_score: severityScore,
+      ai_triage_summary: aiSummary,
+      priority_level: priorityLevel
     };
   }
 
   // Absolute fallback
+  const fallbackDoc = hospitalStaff.find(doc => doc.id === "dr-emergency");
   return {
     matchType: "emergency",
     reasoning: "No standard slots available. Redirecting to Emergency Care.",
-    doctorProfile: hospitalStaff.find(doc => doc.id === "dr-emergency"),
-    requiredSpecialization: "Emergency Medicine"
+    doctorProfile: fallbackDoc,
+    requiredSpecialization: fallbackDoc.specialization,
+    severity_score: severityScore,
+    ai_triage_summary: aiSummary,
+    priority_level: 'Emergency'
   };
 };
