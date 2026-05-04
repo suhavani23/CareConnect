@@ -37,6 +37,27 @@ export const hospitalStaff = [
     availableSlots: ["11:00 AM", "01:00 PM"]
   },
   {
+    id: "dr-reddy",
+    name: "Dr. Sandeep Reddy",
+    specialization: "Orthopedician",
+    experience: 14,
+    availableSlots: ["10:00 AM", "12:00 PM", "03:00 PM"]
+  },
+  {
+    id: "dr-khan",
+    name: "Dr. Sarah Khan",
+    specialization: "Pediatrician",
+    experience: 10,
+    availableSlots: ["09:00 AM", "01:00 PM", "04:00 PM"]
+  },
+  {
+    id: "dr-malhotra",
+    name: "Dr. Arjun Malhotra",
+    specialization: "Dermatologist",
+    experience: 7,
+    availableSlots: ["11:00 AM", "02:00 PM", "05:00 PM"]
+  },
+  {
     id: "dr-emergency",
     name: "Dr. Amit Kumar (Emergency On-call)",
     specialization: "Emergency Medicine",
@@ -53,7 +74,6 @@ export const getDoctorByName = (name) => {
 
 // --- Hybrid Sync Logic ---
 
-// Fallback status store for when Supabase column is missing
 const getLocalStatusStore = () => {
   const data = localStorage.getItem('careconnect_status_fallback');
   return data ? JSON.parse(data) : {};
@@ -63,7 +83,6 @@ const saveLocalStatus = (apptId, status) => {
   const store = getLocalStatusStore();
   store[apptId] = status;
   localStorage.setItem('careconnect_status_fallback', JSON.stringify(store));
-  // Trigger storage event for cross-tab sync
   window.dispatchEvent(new Event('storage'));
 };
 
@@ -93,7 +112,6 @@ export const getBookedAppointments = async () => {
       reasoning: row.reasoning,
       symptoms: row.symptoms || [],
       affectedArea: row.affected_area || '',
-      // Status priority: Supabase -> LocalStorage -> Default
       status: row.status || localStatuses[row.id] || 'WAITING',
       doctor: {
         id: row.doctor_id,
@@ -108,7 +126,6 @@ export const getBookedAppointments = async () => {
 };
 
 export const addBookedAppointment = async (appt) => {
-  // Use snake_case for Supabase columns
   const fullData = {
     doctor_id: appt.doctor.id,
     doctor_name: appt.doctor.name,
@@ -124,7 +141,6 @@ export const addBookedAppointment = async (appt) => {
     status: 'WAITING'
   };
 
-  // Minimal data set for older schemas
   const baseData = {
     doctor_id: appt.doctor.id,
     doctor_name: appt.doctor.name,
@@ -136,7 +152,6 @@ export const addBookedAppointment = async (appt) => {
   };
 
   try {
-    // Try full insert
     const { data, error } = await supabase
       .from('bookings')
       .insert([fullData])
@@ -144,7 +159,6 @@ export const addBookedAppointment = async (appt) => {
 
     if (error) {
       console.warn('Schema error encountered. Retrying with minimal field set...', error.message);
-      // Fallback: Strip clinical fields
       const { data: fallbackData, error: fallbackError } = await supabase
         .from('bookings')
         .insert([baseData])
@@ -176,7 +190,6 @@ export const removeBookedAppointment = async (apptId) => {
 };
 
 export const updateAppointmentStatus = async (apptId, status) => {
-  // Always try Supabase first
   try {
     const { error } = await supabase
       .from('bookings')
@@ -193,8 +206,6 @@ export const updateAppointmentStatus = async (apptId, status) => {
     saveLocalStatus(apptId, status);
   }
 };
-
-// --- Prescription helpers ---
 
 export const getPrescriptions = () => {
   const data = localStorage.getItem('careconnect_prescriptions');
