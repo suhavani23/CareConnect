@@ -5,22 +5,6 @@ import { getBookedAppointments, removeBookedAppointment } from '../services/mock
 
 const DoctorDashboard = () => {
   const [appointments, setAppointments] = useState([]);
-<<<<<<< HEAD
-
-  useEffect(() => {
-    // Load booked appointments from our mock database
-    const bookings = getBookedAppointments();
-    setAppointments([...bookings].reverse()); // Newest first
-  }, []);
-
-  const handleCancelAppointment = (id) => {
-    if (window.confirm('Are you sure you want to cancel this appointment?')) {
-      removeBookedAppointment(id);
-      setAppointments(getBookedAppointments().reverse());
-    }
-  };
-
-=======
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [password, setPassword] = useState('');
 
@@ -75,7 +59,6 @@ const DoctorDashboard = () => {
     );
   }
 
->>>>>>> 03fe6592c0a4c645a0d9d48c63f935a3d59bdd59
   return (
     <div className="min-h-screen bg-slate-50 font-sans p-6 md:p-12 relative">
       <header className="max-w-5xl mx-auto mb-10 flex items-center justify-between">
