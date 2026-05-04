@@ -1,4 +1,4 @@
-/* app.js - MedCare Hospital Booking System Core Logic */
+/* app.js - CareConnect Hospital Booking System Core Logic */
 
 // =============================================
 // DATA CONSTANTS

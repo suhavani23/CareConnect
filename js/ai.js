@@ -1,4 +1,4 @@
-/* ai.js - Hugging Face AI Integration for MedCare */
+/* ai.js - Hugging Face AI Integration for CareConnect */
 
 const HF_MODEL_URL = 'https://api-inference.huggingface.co/models/mistralai/Mistral-7B-Instruct-v0.3';
 
