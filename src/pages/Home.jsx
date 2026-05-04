@@ -4,7 +4,7 @@ import {
   Activity, Shield, Zap, Heart, Brain, 
   Stethoscope, Clock, Users, ArrowRight,
   ClipboardList, Smartphone, Microscope,
-  Baby, Scissors, Bone
+  Baby, Scissors, Bone, ChevronRight
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { hospitalStaff } from '../services/mockDatabase';
