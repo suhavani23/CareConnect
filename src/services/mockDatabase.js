@@ -6,35 +6,35 @@ export const hospitalStaff = [
     name: "Dr. Priya Sharma",
     specialization: "General Physician",
     experience: 12,
-    availableSlots: ["09:00 AM", "11:00 AM"]
+    availableSlots: ["09:00 AM", "11:00 AM", "01:00 PM", "04:00 PM"]
   },
   {
     id: "dr-desai",
     name: "Dr. Rahul Desai",
     specialization: "Neurologist",
     experience: 8,
-    availableSlots: ["10:00 AM", "01:00 PM", "03:00 PM"]
+    availableSlots: ["10:00 AM", "01:00 PM", "03:00 PM", "05:00 PM"]
   },
   {
     id: "dr-patel",
     name: "Dr. Anita Patel",
     specialization: "Neurologist",
     experience: 20,
-    availableSlots: ["02:00 PM"]
+    availableSlots: ["09:30 AM", "11:30 AM", "02:00 PM"]
   },
   {
     id: "dr-singh",
     name: "Dr. Vikram Singh",
     specialization: "Cardiologist",
     experience: 15,
-    availableSlots: ["09:00 AM", "12:00 PM"]
+    availableSlots: ["08:00 AM", "10:00 AM", "12:00 PM", "02:00 PM"]
   },
   {
     id: "dr-gupta",
     name: "Dr. Neha Gupta",
     specialization: "General Physician",
     experience: 5,
-    availableSlots: [] // Fully booked
+    availableSlots: ["11:00 AM", "01:00 PM"]
   },
   {
     id: "dr-emergency",
@@ -51,19 +51,23 @@ export const getDoctorByName = (name) => {
   ) || null;
 };
 
-// --- Supabase-backed appointment functions ---
+// --- Hybrid Sync Logic ---
 
-/**
- * SQL FIX FOR MISSING COLUMNS:
- * Run this in your Supabase SQL Editor if you see errors:
- * 
- * ALTER TABLE bookings 
- * ADD COLUMN IF NOT EXISTS status TEXT DEFAULT 'WAITING',
- * ADD COLUMN IF NOT EXISTS severity_score INT8,
- * ADD COLUMN IF NOT EXISTS ai_triage_summary TEXT,
- * ADD COLUMN IF NOT EXISTS priority_level TEXT DEFAULT 'Routine',
- * ADD COLUMN IF NOT EXISTS affected_area TEXT;
- */
+// Fallback status store for when Supabase column is missing
+const getLocalStatusStore = () => {
+  const data = localStorage.getItem('careconnect_status_fallback');
+  return data ? JSON.parse(data) : {};
+};
+
+const saveLocalStatus = (apptId, status) => {
+  const store = getLocalStatusStore();
+  store[apptId] = status;
+  localStorage.setItem('careconnect_status_fallback', JSON.stringify(store));
+  // Trigger storage event for cross-tab sync
+  window.dispatchEvent(new Event('storage'));
+};
+
+// --- Supabase-backed appointment functions ---
 
 export const getBookedAppointments = async () => {
   try {
@@ -73,10 +77,11 @@ export const getBookedAppointments = async () => {
       .order('created_at', { ascending: false });
 
     if (error) {
-      console.warn('Schema mismatch in bookings table. Some features may be disabled.', error.message);
-      // If the fetch fails entirely, return empty array
+      console.warn('Schema mismatch in bookings table. Falling back to local/partial sync.', error.message);
       return [];
     }
+
+    const localStatuses = getLocalStatusStore();
 
     return (data || []).map(row => ({
       id: row.id,
@@ -88,7 +93,8 @@ export const getBookedAppointments = async () => {
       reasoning: row.reasoning,
       symptoms: row.symptoms || [],
       affectedArea: row.affected_area || '',
-      status: row.status || 'WAITING',
+      // Status priority: Supabase -> LocalStorage -> Default
+      status: row.status || localStatuses[row.id] || 'WAITING',
       doctor: {
         id: row.doctor_id,
         name: row.doctor_name,
@@ -102,6 +108,23 @@ export const getBookedAppointments = async () => {
 };
 
 export const addBookedAppointment = async (appt) => {
+  // Use snake_case for Supabase columns
+  const fullData = {
+    doctor_id: appt.doctor.id,
+    doctor_name: appt.doctor.name,
+    doctor_specialization: appt.doctor.specialization,
+    slot_time: appt.slotTime,
+    urgency_score: appt.urgencyScore,
+    severity_score: appt.severity_score || null,
+    ai_triage_summary: appt.ai_triage_summary || null,
+    priority_level: appt.priority_level || 'Routine',
+    reasoning: appt.reasoning,
+    symptoms: appt.symptoms || [],
+    affected_area: appt.affectedArea || null,
+    status: 'WAITING'
+  };
+
+  // Minimal data set for older schemas
   const baseData = {
     doctor_id: appt.doctor.id,
     doctor_name: appt.doctor.name,
@@ -112,39 +135,27 @@ export const addBookedAppointment = async (appt) => {
     symptoms: appt.symptoms || []
   };
 
-  const extendedData = {
-    ...baseData,
-    severity_score: appt.severity_score || null,
-    ai_triage_summary: appt.ai_triage_summary || null,
-    priority_level: appt.priority_level || 'Routine',
-    affected_area: appt.affectedArea || null,
-    status: 'WAITING'
-  };
-
   try {
-    // Try inserting with all fields first
+    // Try full insert
     const { data, error } = await supabase
       .from('bookings')
-      .insert([extendedData])
+      .insert([fullData])
       .select();
 
     if (error) {
-      // If the error is a missing column (PGRST204 or similar), try falling back to base fields
-      if (error.message.includes('column') || error.code === 'PGRST204') {
-        console.warn('Fallback: Inserting without extended clinical fields due to missing columns.');
-        const { data: fallbackData, error: fallbackError } = await supabase
-          .from('bookings')
-          .insert([baseData])
-          .select();
-        
-        if (fallbackError) throw fallbackError;
-        return fallbackData[0];
-      }
-      throw error;
+      console.warn('Schema error encountered. Retrying with minimal field set...', error.message);
+      // Fallback: Strip clinical fields
+      const { data: fallbackData, error: fallbackError } = await supabase
+        .from('bookings')
+        .insert([baseData])
+        .select();
+      
+      if (fallbackError) throw fallbackError;
+      return fallbackData[0];
     }
     return data[0];
   } catch (error) {
-    console.error('Booking Error:', error);
+    console.error('Final Booking Failure:', error);
     throw error;
   }
 };
@@ -165,6 +176,7 @@ export const removeBookedAppointment = async (apptId) => {
 };
 
 export const updateAppointmentStatus = async (apptId, status) => {
+  // Always try Supabase first
   try {
     const { error } = await supabase
       .from('bookings')
@@ -172,16 +184,13 @@ export const updateAppointmentStatus = async (apptId, status) => {
       .eq('id', apptId);
 
     if (error) {
-       // If column missing, we can't update status, but we can log it
-       if (error.message.includes('column')) {
-         console.error('STATUS UPDATE FAILED: "status" column missing in DB.');
-         return; 
-       }
-       throw error;
+       console.warn('DB Status Update Failed. Syncing with LocalStorage fallback.', error.message);
+       saveLocalStatus(apptId, status);
+       return;
     }
   } catch (error) {
-    console.error('Error updating appointment status:', error);
-    throw error;
+    console.error('Error updating status, falling back to local.', error);
+    saveLocalStatus(apptId, status);
   }
 };
 
