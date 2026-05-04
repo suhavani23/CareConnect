@@ -4,7 +4,6 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import PatientIntake from '../components/IntakeForm/PatientIntake';
 import SlotBooking from '../components/Booking/SlotBooking';
-import RecommendationView from '../components/Booking/RecommendationView';
 import DoctorList from '../components/Booking/DoctorList';
 import EmergencyAlert from '../components/IntakeForm/EmergencyAlert';
 import { simulateCareConnectMatchmaker } from '../services/aiService';
@@ -50,63 +49,44 @@ const PortalFlow = () => {
   const handleIntakeComplete = async (formData) => {
     navigateTo('loading', 1);
     
+    // Perform AI Urgency Assessment
     const urgency = await assessUrgency(formData);
     setUrgencyScore(urgency.score);
 
-    if (urgency.score >= 8) {
-      navigateTo('emergency', 1);
-      
-      const result = simulateCareConnectMatchmaker({
-        patientSymptoms: formData.symptomsArray,
-        bodyRegions: formData.bodyRegions,
-        urgencyScore: urgency.score,
-        preferredDoctorID: formData.preferredDoctorID
-      });
-      
-      const matchData = {
-        ...result,
-        symptoms: formData.symptomsArray,
-        urgencyScore: urgency.score
-      };
-      setMatchResult(matchData);
-    } else {
-      setTimeout(() => {
-        const result = simulateCareConnectMatchmaker({
-          patientSymptoms: formData.symptomsArray,
-          bodyRegions: formData.bodyRegions,
-          urgencyScore: urgency.score,
-          preferredDoctorID: formData.preferredDoctorID
-        });
-        
-        const matchData = {
-          ...result,
-          symptoms: formData.symptomsArray,
-          urgencyScore: urgency.score
-        };
-        
-        setMatchResult(matchData);
-        
-        if (result.matchType === 'preferred') {
-          navigateTo('booking', 1);
-        } else {
-          navigateTo('recommendation', 1);
-        }
-      }, 2000);
-    }
+    // Run Matchmaker for clinical metrics (silent recommendation)
+    const result = simulateCareConnectMatchmaker({
+      patientSymptoms: formData.symptomsArray,
+      bodyRegions: formData.bodyRegions,
+      urgencyScore: urgency.score,
+      preferredDoctorID: formData.preferredDoctorID
+    });
+    
+    const matchData = {
+      ...result,
+      symptoms: formData.symptomsArray,
+      urgencyScore: urgency.score,
+      affected_area: formData.affectedArea
+    };
+    
+    setMatchResult(matchData);
+
+    // Routing Logic: Skip RecommendationView, go to DoctorList or Emergency
+    setTimeout(() => {
+      if (urgency.score >= 8 || result.severity_score >= 80) {
+        navigateTo('emergency', 1);
+      } else {
+        // Go straight to DoctorList (Browse Mode)
+        navigateTo('doctor_list', 1);
+      }
+    }, 2000);
   };
 
   const handleGoBack = () => {
     if (view === 'booking') {
-      if (matchResult.isManualSelection) {
-        navigateTo('doctor_list', -1);
-      } else if (matchResult.matchType === 'preferred') {
-        navigateTo('intake', -1);
-      } else {
-        navigateTo('recommendation', -1);
-      }
+      navigateTo('doctor_list', -1);
     } else if (view === 'doctor_list') {
-      navigateTo('recommendation', -1);
-    } else if (view === 'recommendation') {
+      navigateTo('intake', -1);
+    } else if (view === 'emergency') {
       navigateTo('intake', -1);
     }
   };
@@ -164,8 +144,8 @@ const PortalFlow = () => {
                   </div>
                 </div>
                 <div className="text-center space-y-2">
-                  <h3 className="text-lg font-semibold text-slate-800 animate-pulse">Analyzing profile & availability...</h3>
-                  <p className="text-slate-500 text-sm">Our AI Matchmaker is finding the best doctor for your symptoms.</p>
+                  <h3 className="text-lg font-semibold text-slate-800 animate-pulse">Analyzing clinical profile...</h3>
+                  <p className="text-slate-500 text-sm font-medium">Preparing clinical directory based on your symptoms.</p>
                 </div>
               </div>
             </motion.div>
@@ -181,32 +161,7 @@ const PortalFlow = () => {
               exit="exit"
               transition={{ x: { type: "spring", stiffness: 300, damping: 30 }, opacity: { duration: 0.2 } }}
             >
-              <EmergencyAlert onContinueToBooking={() => {
-                if (matchResult && matchResult.matchType === 'preferred') {
-                  navigateTo('booking', 1);
-                } else {
-                  navigateTo('recommendation', 1);
-                }
-              }} />
-            </motion.div>
-          )}
-
-          {view === 'recommendation' && matchResult && (
-            <motion.div
-              key="recommendation"
-              custom={direction}
-              variants={variants}
-              initial="enter"
-              animate="center"
-              exit="exit"
-              transition={{ x: { type: "spring", stiffness: 300, damping: 30 }, opacity: { duration: 0.2 } }}
-            >
-              <RecommendationView 
-                suggestedDoc={matchResult.doctorProfile}
-                onAccept={() => navigateTo('booking', 1)}
-                onDecline={() => navigateTo('doctor_list', 1)}
-                onGoBack={handleGoBack}
-              />
+              <EmergencyAlert onContinueToBooking={() => navigateTo('doctor_list', 1)} />
             </motion.div>
           )}
 
@@ -226,9 +181,7 @@ const PortalFlow = () => {
                 onSelectDoctor={(doctor) => {
                   setMatchResult({
                     ...matchResult,
-                    doctorProfile: doctor,
-                    matchType: 'preferred', // User manually picked them
-                    isManualSelection: true
+                    doctorProfile: doctor
                   });
                   navigateTo('booking', 1);
                 }}
@@ -249,20 +202,21 @@ const PortalFlow = () => {
               <div className="space-y-6">
                  <div className="max-w-2xl mx-auto text-center flex items-center justify-between">
                    <button onClick={handleGoBack} className="text-slate-400 hover:text-slate-600 transition">
-                     ← Back
+                     ← Back to List
                    </button>
                    <div>
-                     <h2 className="text-2xl font-bold text-slate-800 mb-1">Doctor Match Found</h2>
-                     <p className="text-slate-600 text-sm">Please select an available time slot below.</p>
+                     <h2 className="text-2xl font-bold text-slate-800 mb-1">Confirm Schedule</h2>
+                     <p className="text-slate-600 text-sm font-medium tracking-tight">Select your preferred date and time.</p>
                    </div>
-                   <div className="w-12"></div> {/* Spacer for centering */}
+                   <div className="w-12"></div>
                  </div>
                  <SlotBooking 
                    doctor={matchResult.doctorProfile} 
-                   matchType={matchResult.matchType}
-                   reasoning={matchResult.reasoning}
                    urgencyScore={urgencyScore}
                    symptoms={matchResult.symptoms}
+                   severity_score={matchResult.severity_score}
+                   ai_triage_summary={matchResult.ai_triage_summary}
+                   affected_area={matchResult.affected_area}
                  />
               </div>
             </motion.div>
