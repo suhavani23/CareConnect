@@ -2,38 +2,6 @@
 // Uses Anthropic API logic format for easy future replacement
 
 export const assessUrgency = async ({ bodyRegions, symptoms, painLevel, painDuration, notes }) => {
-  // --- REAL CLAUDE API IMPLEMENTATION (Commented out for future use) ---
-  /*
-  const API_KEY = import.meta.env.VITE_ANTHROPIC_API_KEY;
-  if (API_KEY) {
-    try {
-      const response = await fetch('https://api.anthropic.com/v1/messages', {
-        method: 'POST',
-        headers: {
-          'x-api-key': API_KEY,
-          'anthropic-version': '2023-06-01',
-          'content-type': 'application/json'
-        },
-        body: JSON.stringify({
-          model: "claude-3-haiku-20240307",
-          max_tokens: 150,
-          system: "You are a medical triage assistant. Given the patient's symptoms, pain level (1-10), duration, and affected body regions, return a JSON object with two fields: 'score' (number from 1-10 indicating urgency) and 'reason' (brief 1-sentence explanation). Do not return anything else.",
-          messages: [
-             {
-               role: "user",
-               content: `Patient Data: Regions: ${bodyRegions.join(', ')}. Symptoms: ${symptoms}. Pain: ${painLevel}/10. Duration: ${painDuration}. Notes: ${notes}`
-             }
-          ]
-        })
-      });
-      const data = await response.json();
-      return JSON.parse(data.content[0].text);
-    } catch (err) {
-      console.error("Claude API failed, falling back to simulated logic", err);
-    }
-  }
-  */
-
   // --- SIMULATED SCORING LOGIC ---
   return new Promise((resolve) => {
     setTimeout(() => {
@@ -73,8 +41,6 @@ export const assessUrgency = async ({ bodyRegions, symptoms, painLevel, painDura
       // Final adjustments
       if (score >= 8) {
         if (!isCritical && !hasCriticalRegion && score === 8) {
-          // If only pain level is high, it might not be a true emergency (e.g., severe chronic back pain)
-          // But for triage, we still flag it if it's new
           reason = "High pain level reported.";
         }
       }

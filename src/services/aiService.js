@@ -1,10 +1,6 @@
 import { hospitalStaff } from './mockDatabase';
 
-<<<<<<< HEAD
 export const simulateCareConnectMatchmaker = ({ patientSymptoms, bodyRegions = [], urgencyScore, preferredDoctorID }) => {
-=======
-export const simulateCareConnectMatchmaker = ({ patientSymptoms, urgencyScore, preferredDoctorID }) => {
->>>>>>> 03fe6592c0a4c645a0d9d48c63f935a3d59bdd59
   // Task Logic 1: Check Preference
   if (preferredDoctorID && preferredDoctorID !== "none") {
     const preferredDoctor = hospitalStaff.find(doc => doc.id === preferredDoctorID);
@@ -36,17 +32,11 @@ export const simulateCareConnectMatchmaker = ({ patientSymptoms, urgencyScore, p
   let requiredSpecialization = "General Physician";
   const symptomsStr = patientSymptoms.join(" ").toLowerCase();
   
-<<<<<<< HEAD
   const regionsObj = new Set(bodyRegions);
   
   if (symptomsStr.includes("headache") || symptomsStr.includes("migraine") || symptomsStr.includes("dizzy") || regionsObj.has("Head")) {
     requiredSpecialization = "Neurologist";
   } else if (symptomsStr.includes("chest") || symptomsStr.includes("heart") || symptomsStr.includes("palpitation") || regionsObj.has("Chest")) {
-=======
-  if (symptomsStr.includes("headache") || symptomsStr.includes("migraine") || symptomsStr.includes("dizzy")) {
-    requiredSpecialization = "Neurologist";
-  } else if (symptomsStr.includes("chest") || symptomsStr.includes("heart") || symptomsStr.includes("palpitation")) {
->>>>>>> 03fe6592c0a4c645a0d9d48c63f935a3d59bdd59
     requiredSpecialization = "Cardiologist";
   }
 
